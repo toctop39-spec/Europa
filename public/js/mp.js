@@ -360,12 +360,14 @@ window.renderCountryList = (function (orig) {
 })();
 window.pickCountry = id => { gotoCountry(id); };
 window.startPanel = function () {
-  const p = $('startPanel'); if (!p) return; const c = countryMap[LOCAL];
-  const pl = (PRES.players || []);
-  p.style.display = 'block';
-  p.innerHTML = `<div style="font-weight:bold;margin-bottom:4px">${isHuman(LOCAL) && c ? 'ВАША СТРАНА' : 'ВЫ НАБЛЮДАТЕЛЬ'}</div>${isHuman(LOCAL) && c ? `<div style="font-size:13px;margin:4px 0">${flagImg(c.id, 54)}<b>${c.name}</b></div>` : ''}
-  <div style="font-size:9px;margin:3px 0;color:#475569">Карта: тяните левой кнопкой мыши, колесо — масштаб</div><div style="font-size:10px;margin:3px 0">Игроки онлайн: ${pl.filter(x => x.online).length} / ${pl.length}${PRES.paused ? ' · ⏸ мир на паузе (нет игроков)' : ''}</div>
-  ${isHuman(LOCAL) ? '<button class="btn small" style="display:inline-block" onclick="openLobby()">СМЕНИТЬ СТРАНУ</button>' : '<button class="btn green" style="display:block;width:100%;font-size:14px;padding:8px;margin:4px 0" onclick="openLobby()">▶ НАЧАТЬ ИГРУ (выбрать страну)</button>'} ${isHuman(LOCAL) ? '<button class="btn small" style="display:inline-block" onclick="A.flagEditor()">ФЛАГ</button>' : ''} <button class="btn small" style="display:inline-block" onclick="chatToggle(true)">ЧАТ</button>`;
+  // Панель игрока — компактная строка в верхней панели карты (раньше была окном посреди карты)
+  const sp = $('startPanel'); if (sp) sp.style.display = 'none';
+  let bar = $('mpBar'); if (!bar) { const tb = document.querySelector('.map-toolbar'); if (!tb) return; bar = document.createElement('span'); bar.id = 'mpBar'; bar.style.cssText = 'margin-left:auto;display:inline-flex;gap:4px;align-items:center'; tb.appendChild(bar); }
+  const pl = (PRES.players || []), human = isHuman(LOCAL);
+  bar.innerHTML = `<span style="font-size:10px;color:#475569">👥 ${pl.filter(x => x.online).length}/${pl.length}${PRES.paused ? ' ⏸' : ''}</span>` +
+    (human ? `<button class="btn small" style="width:auto;margin:0" onclick="openLobby()">СМЕНИТЬ СТРАНУ</button><button class="btn small" style="width:auto;margin:0" onclick="A.flagEditor()">ФЛАГ</button>`
+      : `<button class="btn small green" style="width:auto;margin:0;font-weight:bold" onclick="openLobby()">▶ НАЧАТЬ ИГРУ</button>`) +
+    `<button class="btn small" style="width:auto;margin:0" onclick="chatToggle()">ЧАТ</button>`;
 };
 
 // ---------- чат ----------
