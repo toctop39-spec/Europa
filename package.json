@@ -1,0 +1,21 @@
+{
+  "name": "europa-strategy-online",
+  "version": "1.0.0",
+  "description": "Europa Strategy Online — онлайн-версия геополитической стратегии в реальном времени",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build:grid": "node tools/build-grid.js",
+    "test": "node tools/test-multiplayer.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "compression": "^1.7.4",
+    "express": "^4.19.2",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "canvas": "^3.1.0",
+    "jsdom": "^26.0.0"
+  }
+}

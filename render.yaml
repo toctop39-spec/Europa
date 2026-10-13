@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: europa-strategy-online
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DIFFICULTY
+        value: "1"        # 0.6 лёгкая, 1 нормальная, 1.35 жёсткая
+      # Чтобы мир не терялся при перезапуске, нужен платный план + диск (см. README):
+      # - key: DATA_DIR
+      #   value: /var/data
