@@ -869,20 +869,28 @@ canvas.addEventListener('mousedown', e => {
     }
 
     if (e.button === 0) {
-        let targetC = getCountryAtPos(wPos);
-        if (currentTool === 'inspect' && targetC) {
-            showCountryInfo(targetC);
-        } else if (currentTool && currentTool.indexOf('build_') === 0) {
-            tryPlaceBuilding(currentTool.replace('build_', ''), wPos, targetC);
-        }
+        // ЛКМ: если сдвинули мышь — это перетаскивание карты, если нет — обычный клик (инспекция/строительство)
+        pendingClick = { sx: e.clientX, sy: e.clientY, wPos, px: lastMouseX - panX, py: lastMouseY - panY };
     }
 });
+let pendingClick = null;
+function doMapClick(wPos) {
+    let targetC = getCountryAtPos(wPos);
+    if (currentTool === 'inspect' && targetC) {
+        showCountryInfo(targetC);
+    } else if (currentTool && currentTool.indexOf('build_') === 0) {
+        tryPlaceBuilding(currentTool.replace('build_', ''), wPos, targetC);
+    }
+}
 
 canvas.addEventListener('mousemove', e => {
     let rect = canvas.getBoundingClientRect();
     lastMouseX = e.clientX - rect.left; lastMouseY = e.clientY - rect.top;
     let wPos = screenToWorld(lastMouseX, lastMouseY);
 
+    if (pendingClick && Math.hypot(e.clientX - pendingClick.sx, e.clientY - pendingClick.sy) > 5) {
+        isDraggingPan = true; startPanX = pendingClick.px; startPanY = pendingClick.py; pendingClick = null;
+    }
     if (isDraggingPan) {
         panX = lastMouseX - startPanX; panY = lastMouseY - startPanY;
         draw(); return;
@@ -890,8 +898,10 @@ canvas.addEventListener('mousemove', e => {
 });
 
 canvas.addEventListener('mouseup', e => {
+    if (pendingClick && e.button === 0) { const w = pendingClick.wPos; pendingClick = null; doMapClick(w); }
     isDraggingPan = false;
 });
+canvas.addEventListener('mouseleave', () => { pendingClick = null; isDraggingPan = false; });
 
 canvas.addEventListener('wheel', e => {
     e.preventDefault();
