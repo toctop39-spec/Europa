@@ -38,6 +38,7 @@ function runAs(actor, fn) {
 ['openDiplomacyModal', 'openChatModal', 'openTreatiesModal', 'openCustomTreatyModal', 'openCreditModal', 'openNotificationsModal', 'openCreateTreatyModal'].forEach(n => { window[n] = () => { if (n === 'openChatModal') chatToggle(true); else A.hub('dipl'); }; });
 ['trainDivision', 'buyFactory', 'buyHousing', 'makeInvestment', 'openEconomyModal', 'openConstructionModal', 'openArmyModal', 'openInvestmentModal'].forEach(n => { window[n] = () => A.hub(n.includes('Army') || n === 'trainDivision' ? 'mil' : n.includes('Constr') || n.includes('buy') ? 'build' : 'econ'); });
 
+window.gotoCountry = function (id) { const c = countryMap[id]; const p = c && ((typeof capitalOf === 'function' && capitalOf(c)) || c._lc); if (p) A.goto(p.x, p.y); };
 // ---------- команды ----------
 function sendCmd(name, args) {
   if (replaying) return;
@@ -63,7 +64,7 @@ CMDS.$join = function (name) {
   const c = countryMap[ctxActor]; if (!c || humans.has(c.id) || c._defeated) return;
   humans.add(c.id); c._pname = String(name || 'Игрок').slice(0, 24); initHuman(c, true);
   addNewsEvent(`Игрок ${c._pname} принял управление страной ${c.name}`, 'diplomacy'); mapDirty = true;
-  if (c.id === LOCAL) { toast(`Вы управляете страной ${c.name}`, 'good'); }
+  if (c.id === LOCAL && !suppressUI) { toast(`Вы управляете страной ${c.name}`, 'good'); setTimeout(() => { gotoCountry(c.id); A.hub('hq'); }, 100); }
 };
 CMDS.$leave = function () {
   const c = countryMap[ctxActor]; if (!c || !humans.has(c.id)) return;
@@ -221,7 +222,7 @@ function pump() {
 }
 function finishCatchup() {
   playerCountryId = LOCAL; mapDirty = false; renderOffscreenMap(); refreshUnits(); refreshDateDisplays(); updatePlayerInfo(); renderCountryList(); startPanel(); if (window.hubRefresh) hubRefresh(); draw();
-  if (!bootDone) { bootDone = true; if (!isHuman(LOCAL)) { LOCAL = ''; playerCountryId = ''; openLobby(); } else { A.goto && A.goto(LOCAL); setTimeout(() => A.hub('hq'), 200); } }
+  if (!bootDone) { bootDone = true; if (!isHuman(LOCAL)) { LOCAL = ''; playerCountryId = ''; openLobby(); } else { gotoCountry(LOCAL); setTimeout(() => A.hub('hq'), 200); } }
   if (isHuman(LOCAL)) { const W = countryMap[LOCAL]; if (W && W._peace) showPeaceFor(W); if (W && W._defeated && window.showDefeat) showDefeat('Ваше государство разгромлено.'); }
 }
 
@@ -343,7 +344,7 @@ window.lobbyPick = id => {
   const name = ($('lbName').value || '').trim(); if (!name) { toast('Введите имя', 'warn'); return; }
   if (isHuman(LOCAL) && id !== LOCAL) { leaveGame(); }
   if (id !== LOCAL || !isHuman(LOCAL)) joinGame(id, name); lobbyClose();
-  setTimeout(() => { A.goto && A.goto(id); }, 2500);
+  setTimeout(() => { gotoCountry(id); }, 2500);
 };
 
 // ---------- панель игрока (вместо выбора страны) ----------
@@ -353,18 +354,18 @@ window.renderCountryList = (function (orig) {
     const qq = (($('countrySearch') || {}).value || '').toLowerCase(); const taken = new Map((PRES.players || []).map(p => [p.country, p]));
     countries.filter(c => c.name.toLowerCase().includes(qq) || c.id.toLowerCase().includes(qq)).sort((a, b) => (taken.has(b.id) - taken.has(a.id)) || (b.id === LOCAL) - (a.id === LOCAL) || a.name.localeCompare(b.name)).slice(0, 80).forEach(c => {
       const p = taken.get(c.id); const b = document.createElement('button'); b.className = 'btn ' + (c.id === LOCAL ? 'green' : '');
-      b.innerHTML = flagImg(c.id, 16) + c.name + (c.id === LOCAL ? ' (ВЫ)' : p ? ` 🧑${p.name.replace(/</g, '')}${p.online ? '' : ' 💤'}` : ''); b.onclick = () => { A.goto && A.goto(c.id); }; box.appendChild(b);
+      b.innerHTML = flagImg(c.id, 16) + c.name + (c.id === LOCAL ? ' (ВЫ)' : p ? ` 🧑${p.name.replace(/</g, '')}${p.online ? '' : ' 💤'}` : ''); b.onclick = () => { gotoCountry(c.id); }; box.appendChild(b);
     });
   };
 })();
-window.pickCountry = id => { A.goto && A.goto(id); };
+window.pickCountry = id => { gotoCountry(id); };
 window.startPanel = function () {
   const p = $('startPanel'); if (!p) return; const c = countryMap[LOCAL];
   const pl = (PRES.players || []);
   p.style.display = 'block';
   p.innerHTML = `<div style="font-weight:bold;margin-bottom:4px">${isHuman(LOCAL) && c ? 'ВАША СТРАНА' : 'ВЫ НАБЛЮДАТЕЛЬ'}</div>${isHuman(LOCAL) && c ? `<div style="font-size:13px;margin:4px 0">${flagImg(c.id, 54)}<b>${c.name}</b></div>` : ''}
-  <div style="font-size:10px;margin:3px 0">Игроки онлайн: ${pl.filter(x => x.online).length} / ${pl.length}${PRES.paused ? ' · ⏸ мир на паузе (нет игроков)' : ''}</div>
-  <button class="btn small" style="display:inline-block" onclick="openLobby()">${isHuman(LOCAL) ? 'СМЕНИТЬ СТРАНУ' : 'ИГРАТЬ'}</button> ${isHuman(LOCAL) ? '<button class="btn small" style="display:inline-block" onclick="A.flagEditor()">ФЛАГ</button>' : ''} <button class="btn small" style="display:inline-block" onclick="chatToggle(true)">ЧАТ</button>`;
+  <div style="font-size:9px;margin:3px 0;color:#475569">Карта: тяните левой кнопкой мыши, колесо — масштаб</div><div style="font-size:10px;margin:3px 0">Игроки онлайн: ${pl.filter(x => x.online).length} / ${pl.length}${PRES.paused ? ' · ⏸ мир на паузе (нет игроков)' : ''}</div>
+  ${isHuman(LOCAL) ? '<button class="btn small" style="display:inline-block" onclick="openLobby()">СМЕНИТЬ СТРАНУ</button>' : '<button class="btn green" style="display:block;width:100%;font-size:14px;padding:8px;margin:4px 0" onclick="openLobby()">▶ НАЧАТЬ ИГРУ (выбрать страну)</button>'} ${isHuman(LOCAL) ? '<button class="btn small" style="display:inline-block" onclick="A.flagEditor()">ФЛАГ</button>' : ''} <button class="btn small" style="display:inline-block" onclick="chatToggle(true)">ЧАТ</button>`;
 };
 
 // ---------- чат ----------
