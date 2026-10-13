@@ -50,6 +50,11 @@ function me() { return countryMap[playerCountryId]; }
 function minSkill(c, k) { let m = c.gov.min[k]; return m ? m.skill : 0; }
 function costMult(c) { return (1 + (c.economy.inflation || 0) / 100) * getCostMultiplier(c.id); }
 function techFx(c, k) { let s = 0; TECH.forEach(t => { if (c.mil.done[t[0]]) s += t[5][k] || 0; }); return s; }
+// ---- цены: дивизии и здания дорожают с каждой уже имеющейся единицей, дивизии требуют много людей ----
+const DIV_COST_K = 4, DIV_MP_K = 3.5, BLD_COST_K = 1.6;
+function divCost(c, s) { return s.cost * DIV_COST_K * costMult(c) * (1 + Math.min(2.5, (c.army ? c.army.divisions.length : 0) * 0.07)); }
+function divMp(c, s) { return Math.round(s.mp * DIV_MP_K * (1 + Math.min(1.5, (c.army ? c.army.divisions.length : 0) * 0.03))); }
+function bldCost(c, type, contrMult) { return BT[type].cost * BLD_COST_K * (contrMult || 1) * costMult(c) * (1 + bcount(c, type) * 0.12); }
 function bcount(c, t) { return c.bld[t] || 0; }
 function tplStats(t) {
   let s = { atk: 0, def: 0, mp: 0, cost: 0, rifles: 0, guns: 0, tanks: 0, n: 0 };
@@ -151,7 +156,7 @@ function econDay(c) {
   if (e.reparations && countryMap[e.reparations.to]) { repar = rev * e.reparations.percent; countryMap[e.reparations.to].economy.budget += repar; }
   rev -= repar; e.income = rev;
   let atWar = activeWars.filter(w => w.a === c.id || w.b === c.id).length, divs = c.army ? c.army.divisions.filter(d => d.status === 'active').length : 0;
-  let upkeep = (atWar * 0.12 + divs * 0.025) * costMult(c), exp;
+  let upkeep = (atWar * 0.12 + divs * 0.07 * (1 + divs * 0.02)) * costMult(c), exp;
   if (me_) {
     let L = e.lvl, sp = (L.def * .14 + L.edu * .08 + L.hlth * .08 + L.infra * .08 + L.sci * .04 + L.soc * .10) / 50 * rev;
     sp *= 1 + modSum(c, 'spend'); let sal = Object.values(g.min).length * 0.02, coupons = 0;
@@ -179,7 +184,7 @@ function econDay(c) {
   c.factoryCount = c.factoryCount || 0;
   let ind = 1 + (me_ ? techFx(c, 'ind') + bcount(c, 'power') * .08 + minSkill(c, 'ind') * .03 + [0, 0, .15, .3][g.laws.econ] : 0);
   let out = (5.5 + c.factoryCount * 8) * ind * (me_ ? clamp(1 - modSum(c, 'strike'), .3, 1) : 1), civ = out * c.factoryCivRatio, mil = out - civ;
-  e.budget += civ * 0.08;
+  e.budget += civ * 0.08; e.income += civ * 0.08;   // доход от гражданских заводов тоже виден в «Доход/день»
   if (me_) {
     c._milToday = mil; let L = c.mil.lines, tot = L.rifles + L.guns + L.tanks || 1, q = c.mil.equip;
     if (e.res.steel > 0) { e.res.steel -= mil * 0.1; q.rifles += mil * L.rifles / tot * 3; q.guns += mil * L.guns / tot * 1.2; q.tanks += mil * L.tanks / tot * 0.6; }
@@ -227,7 +232,7 @@ const STAGES = ['Проектирование', 'Разрешение (доку�
 A.newProject = function (type, contr, site) {
   let c = me(), t = BT[type], k = CONTR[contr];
   if (projects.filter(p => !p.done).length >= 8) { toast('Не более 8 проектов одновременно', 'warn'); return; }
-  let cost = +(t.cost * k[1] * costMult(c) * (1 + bcount(c, type) * 0.04)).toFixed(2);
+  let cost = +bldCost(c, type, k[1]).toFixed(2);
   let p = { id: projId++, type, name: t.n, contr, cost, stage: 0, left: t.d[0] * k[2], steelNeed: t.steel, steelGot: 0, paused: false, site: site || null, prio: 1, done: false, note: 'Идёт проектирование' };
   projects.push(p); addNewsEvent(`Заложен проект «${t.n}»`, 'economy'); toast(`🏗 Проект «${t.n}» запущен (смета ${fM(cost)})`, 'good'); if (window.hubRender) hubRender();
 };
@@ -284,10 +289,10 @@ window.tryPlaceBuilding = function (type, wPos, targetC) {
 A.orderDiv = function (ti, n) {
   let c = me(), t = c.mil.tpl[ti]; if (!t) return; let s = tplStats(t), cm = costMult(c);
   for (let i = 0; i < n; i++) {
-    let cost = +(s.cost * cm).toFixed(2), q = c.mil.equip;
-    if (c.economy.budget < cost) return toast('Не хватает денег', 'warn'); if (c.economy.manpower < s.mp) return toast('Не хватает людских ресурсов', 'warn');
+    let cost = +divCost(c, s).toFixed(2), mpNeed = divMp(c, s), q = c.mil.equip;
+    if (c.economy.budget < cost) return toast('Не хватает денег', 'warn'); if (c.economy.manpower < mpNeed) return toast(`Не хватает людей: нужно ${mpNeed.toLocaleString('ru-RU')}`, 'warn');
     if (q.rifles < s.rifles || q.guns < s.guns || q.tanks < s.tanks) return toast(`Не хватает вооружения: нужно ${s.rifles} ружей, ${s.guns} орудий, ${s.tanks} танков`, 'warn');
-    c.economy.budget -= cost; c.economy.manpower -= s.mp; q.rifles -= s.rifles; q.guns -= s.guns; q.tanks -= s.tanks;
+    c.economy.budget -= cost; c.economy.manpower -= mpNeed; q.rifles -= s.rifles; q.guns -= s.guns; q.tanks -= s.tanks;
     let days = Math.max(2, Math.round(s.days * (1 - minSkill(c, 'def') * .04))); let nid = c.army.divisions.reduce((m, d) => Math.max(m, d.id), 0) + 1;
     c.army.divisions.push({ id: nid, name: `${nid}-я ${t.name.split(' ')[0].toLowerCase()} дивизия`, tpl: t.name, max: Math.round(100 * s.q), strength: Math.round(100 * s.q), xp: 0, status: 'training', daysLeft: days, army: 0, gen: 0 });
   }
@@ -297,7 +302,7 @@ A.saveTpl = function (name, b) {
   let c = me(), d = { name: String(name || '').slice(0, 40), b: b || {} }; Object.keys(d.b).forEach(k => { d.b[k] = clamp(Math.floor(+d.b[k] || 0), 0, 14); }); if (!d.name.trim()) return toast('Введите название шаблона', 'warn'); if (tplStats(d).n < 1 || tplStats(d).n > 14) return toast('Шаблон: 1-14 батальонов', 'warn');
   c.mil.tpl.push({ name: d.name, b: Object.assign({}, d.b) }); toast('Шаблон сохранён', 'good'); hubRender();
 };
-A.reinf = function (di) { let c = me(), d = c.army.divisions.find(x => x.id === di); if (!d) return; let need = d.max - d.strength, cost = need * 0.012 * costMult(c), mp = need * 60; if (need < 1) return; if (c.economy.budget < cost || c.economy.manpower < mp) return toast('Не хватает денег или людей', 'warn'); c.economy.budget -= cost; c.economy.manpower -= mp; d.strength = d.max; hubRender(); };
+A.reinf = function (di) { let c = me(), d = c.army.divisions.find(x => x.id === di); if (!d) return; let need = d.max - d.strength, cost = need * 0.03 * costMult(c), mp = need * 150; if (need < 1) return; if (c.economy.budget < cost || c.economy.manpower < mp) return toast('Не хватает денег или людей', 'warn'); c.economy.budget -= cost; c.economy.manpower -= mp; d.strength = d.max; hubRender(); };
 A.disband = function (di) { let c = me(); let d = c.army.divisions.find(x => x.id === di); if (!d) return; c.economy.manpower += d.strength * 40; c.army.divisions = c.army.divisions.filter(x => x.id !== di); hubRender(); };
 A.hireGen = function (id) { let c = me(), g = c.mil.pool.find(x => x.id === id); if (!g || c.gov.pp < 25) return toast('Нужно 25 политвл.', 'warn'); c.gov.pp -= 25; c.mil.gens.push(g); c.mil.pool = c.mil.pool.filter(x => x.id !== id); hubRender(); };
 A.newArmy = function () { let c = me(); c.mil.armies.push({ id: armyId++, name: `${c.mil.armies.length + 1}-я армия`, stance: 1, gen: 0 }); hubRender(); };
