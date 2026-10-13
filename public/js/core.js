@@ -346,7 +346,8 @@ window.simulateOneDay = function () {
   updateCountryEconomics(); processCredits(); randomAIActions(); processTreatyProposals(); dailyExt();
 };
 window.updatePlayerInfo = function () {
-  let c = countryMap[playerCountryId]; if (!c || !c.economy) return; let e = c.economy, g = c.gov || {};
+  let c = countryMap[playerCountryId];
+  if (!c || !c.economy) { ['playerCountryBadge', 'budgetDisplay', 'incomeDisplay', 'expensesDisplay', 'debtDisplay', 'creditRatingDisplay', 'taxRateDisplay', 'populationDisplay', 'gdpDisplay', 'manpowerDisplay', 'influenceDisplay', 'approvalDisplay', 'stabilityDisplay', 'ppDisplay', 'inflDisplay'].forEach(i => { const e = $(i); if (e) e.innerText = i === 'playerCountryBadge' ? 'НАБЛЮДАТЕЛЬ' : '—'; }); return; } let e = c.economy, g = c.gov || {};
   const S = (id, v) => { let el = $(id); if (el) el.innerText = v; };
   S('playerCountryBadge', c.name); S('budgetDisplay', fM(e.budget)); S('incomeDisplay', '+' + fM(e.income)); S('expensesDisplay', '-' + fM(e.expenses));
   S('debtDisplay', fM(e.debt)); S('creditRatingDisplay', e.creditRating); S('taxRateDisplay', (e.taxRate || 0).toFixed(0) + '%'); S('populationDisplay', e.population.toFixed(1) + 'M');
