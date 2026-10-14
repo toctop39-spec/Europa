@@ -79,7 +79,7 @@ function tDipl(c) {
 }
 function tDocs() {
   let p = docs.filter(d => d.owner === playerCountryId && d.status === 'pending'), h = docs.filter(d => d.owner === playerCountryId && d.status !== 'pending').slice(0, 25);
-  return `<h4>На подпись (${p.length})</h4>${p.map(d => `<div class="doc"><div class="stamp">№ ${d.no} · ${d.date.toLocaleDateString('ru-RU')} · от: ${d.from} · срок до дня ${d.deadline}</div><b>${d.title}</b><p>${d.body}</p>${d.opts.map((o, i) => btn(o[0].replace(/\s*\([^)]*\)/g, ''), `A.docDo(${d.id},${i})`, i === 0 ? 'green' : '')).join(' ')}</div>`).join('') || '<i>Нет документов</i>'}<h4>Архив</h4>${h.map(d => `<div class="row"><span>№ ${d.no} ${d.title}</span><i>${d.result || ''}</i></div>`).join('')}`;
+  return `<h4>На подпись (${p.length})</h4>${p.map(d => `<div class="doc"><div class="stamp">№ ${d.no} · ${d.date.toLocaleDateString('ru-RU')} · от: ${d.from} · срок до дня ${d.deadline}</div><b>${d.title}</b><p>${d.body}</p>${d.bd ? btn('🗺 Показать границу на карте', `A.docPreview(${d.id})`, 'green') + ' ' : ''}${d.opts.map((o, i) => btn(o[0].replace(/\s*\([^)]*\)/g, ''), `A.docDo(${d.id},${i})`, i === 0 ? 'green' : '')).join(' ')}</div>`).join('') || '<i>Нет документов</i>'}<h4>Архив</h4>${h.map(d => `<div class="row"><span>№ ${d.no} ${d.title}</span><i>${d.result || ''}</i></div>`).join('')}`;
 }
 let fDraft = null;
 function tFlag(c) {
