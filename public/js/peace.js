@@ -69,21 +69,21 @@ function transferStrip(fromNum, toNum, count) {
   return moved;
 }
 function warBetween(a, b) { return activeWars.find(x => (x.a === a && x.b === b) || (x.a === b && x.b === a)); }
-A.deal = function (id) { deal = { id, border: 0, line: 'front', repar: 0, army: false, pact: false }; renderDeal(); $('dealModal').style.display = 'flex'; A.hubClose(); };
+A.deal = function (id) { deal = { id, border: 0, bd: null, line: 'front', repar: 0, army: false, pact: false }; renderDeal(); $('dealModal').style.display = 'flex'; A.hubClose(); };
 A.dealSet = function (k, v) { deal[k] = v; renderDeal(); };
 A.dealClose = function () { $('dealModal').style.display = 'none'; };
 function dealChance(d) {
   let c = me(), o = countryMap[d.id], w = warBetween(c.id, d.id), base;
   if (w) { let ep = ((w.press || {})[d.id] || { p: 0 }).p, mp = ((w.press || {})[c.id] || { p: 0 }).p; base = 0.1 + ep / 100 * 0.9 - mp / 100 * 0.3; }
   else { let st = getDiplomaticStatus(d.id); base = (st === 'allied' ? 0.6 : st === 'friendly' ? 0.3 : st === 'neutral' ? 0.12 : 0.04) + (c.army.divisions.length > o.army.divisions.length * 1.5 ? 0.1 : 0); }
-  let cost = d.border * 0.022 + d.repar * 0.006 + (d.army ? 0.18 : 0) + (d.line === 'prewar' && w ? 0.05 : 0) - (d.pact ? 0.05 : 0);
+  let cost = (d.bd ? borderPct(c.id, d.id, d.bd) : d.border) * 0.022 + d.repar * 0.006 + (d.army ? 0.18 : 0) + (d.line === 'prewar' && w ? 0.05 : 0) - (d.pact ? 0.05 : 0);
   return clamp(base - cost, 0.02, 0.97);
 }
 function renderDeal() {
   let c = me(), o = countryMap[d_().id], w = warBetween(c.id, deal.id), ch = dealChance(deal), pr = w && w.press ? w.press[deal.id] : null, B = (k, v, t) => `<button class="btn small ${deal[k] === v ? 'green' : ''}" onclick="A.dealSet('${k}',${typeof v === 'string' ? "'" + v + "'" : v})">${t}</button>`;
   $('dealBody').innerHTML = `<h4>${flagImg(o.id, 22)} ${w ? 'Мирный договор с ' : 'Пересмотр границы: '}${o.name}</h4>${pr ? `Давление на них: <b>${Math.round(pr.p)}</b>/100${pr.parts.length ? ' (' + pr.parts.join(', ') + ')' : ''}<br>` : ''}
   ${w ? `<div class="row"><span><b>Линия границы</b></span><span>${B('line', 'front', 'По текущему фронту')}${B('line', 'prewar', 'Вывод войск: довоенная')}</span></div>` : ''}
-  <div class="row"><span><b>Пересмотр границы</b>: отдать нам <b>${deal.border}%</b> территории вдоль границы</span><input type="range" min="0" max="40" value="${deal.border}" onchange="A.dealSet('border',+this.value)"></div>
+  ${borderRowHTML()}
   <div class="row"><span><b>Репарации</b>: ${deal.repar}%</span><input type="range" min="0" max="30" value="${deal.repar}" onchange="A.dealSet('repar',+this.value)"></div>
   <div class="row"><span><b>Сократить армию врага вдвое</b></span><span>${B('army', true, 'Да')}${B('army', false, 'Нет')}</span></div>
   <div class="row"><span><b>Пакт о ненападении</b></span><span>${B('pact', true, 'Подписать')}${B('pact', false, 'Нет')}</span></div>
@@ -92,14 +92,14 @@ function renderDeal() {
 }
 const d_ = () => deal;
 A.dealSend = function () {
-  const d = { border: deal.border, line: deal.line, repar: deal.repar, army: deal.army, pact: deal.pact };
+  const d = { border: 0, bd: deal.bd, line: deal.line, repar: deal.repar, army: deal.army, pact: deal.pact };
   sendCmd('dealExec', [deal.id, d]); A.dealClose();
 };
 // Выполняется у всех: me() = отправитель
 function applyDeal(aId, bId, d) {
   let c = countryMap[aId], o = countryMap[bId], w = warBetween(aId, bId); if (!c || !o) return;
   if (w && d.line === 'prewar') restoreWarBorders(w);
-  let moved = 0; if (d.border > 0) { let total = cellsOf(o.numericId), want = Math.round(total * clamp(d.border, 0, 40) / 100); moved = transferStrip(o.numericId, c.numericId, want); if (moved) transferEconomyShare(o, c, moved / Math.max(1, total)); }
+  let moved = 0; if (d.bd) moved = applyBorder(aId, bId, d.bd);
   if (d.repar > 0) o.economy.reparations = { to: c.id, percent: clamp(d.repar, 0, 30) / 100 }; if (d.army) o.army.divisions = o.army.divisions.slice(0, Math.ceil(o.army.divisions.length / 2));
   if (w) { activeWars = activeWars.filter(x => x !== w); endWarPeace(w); }
   if (d.pact) { truces[c.id + o.id] = truces[o.id + c.id] = currentTurn + 150; if (diplomaticRelations[c.id][o.id]) diplomaticRelations[c.id][o.id].status = 'friendly'; if (diplomaticRelations[o.id][c.id]) diplomaticRelations[o.id][c.id].status = 'friendly'; treaties.push({ id: nextId('t'), name: `Пакт о ненападении ${c.name}-${o.name}`, type: 'non_aggression', content: 'Пакт о ненападении', parties: [c.id, o.id], status: 'active', startDate: new Date(simDate), duration: 3650 }); }
@@ -109,13 +109,14 @@ function applyDeal(aId, bId, d) {
 }
 window.dealExec = function (id, d) {
   let c = me(), o = countryMap[id]; if (!c || !o || id === c.id) return; d = d || {};
-  d = { border: clamp(+d.border || 0, 0, 40), line: d.line === 'prewar' ? 'prewar' : 'front', repar: clamp(+d.repar || 0, 0, 30), army: !!d.army, pact: !!d.pact };
+  d = { border: 0, bd: cleanBd(d.bd), line: d.line === 'prewar' ? 'prewar' : 'front', repar: clamp(+d.repar || 0, 0, 30), army: !!d.army, pact: !!d.pact };
   let w = warBetween(c.id, id);
   if (isHuman(id)) {
-    const aId = c.id, bId = id; const desc = `${w ? 'Мирный договор' : 'Пересмотр границы'} от ${c.name}: граница ${d.border}%, репарации ${d.repar}%${d.army ? ', сокращение армии' : ''}${d.pact ? ', пакт о ненападении' : ''}`;
-    runAs(bId, () => mkDoc(w ? '📜 Предложение мира' : '📜 Пересмотр границы', desc, c.name, [
+    const aId = c.id, bId = id; const desc = `${w ? 'Мирный договор' : 'Пересмотр границы'} от ${c.name}: ${d.bd ? 'нарисована новая граница, ' : ''}репарации ${d.repar}%${d.army ? ', сокращение армии' : ''}${d.pact ? ', пакт о ненападении' : ''}`;
+    const bdDoc = runAs(bId, () => mkDoc(w ? '📜 Предложение мира' : '📜 Пересмотр границы', desc, c.name, [
       ['Принять условия', () => { if (!warBetween(aId, bId) !== !w) return; applyDeal(aId, bId, d); }],
       ['Отклонить', () => { if (diplomaticRelations[aId] && diplomaticRelations[aId][bId]) diplomaticRelations[aId][bId].trust -= 5; addNewsEvent(`${o.name} отклонила предложение ${c.name}`, 'diplomacy'); }]], 150, 1));
+    if (d.bd && bdDoc) { bdDoc.bd = { a: aId, b: bId, bd: d.bd }; const pl = borderPlan(aId, bId, d.bd); bdDoc.body += ` Граница изменена: вы получите ${pl.toB.length} секторов, потеряете ${pl.toA.length}. Нажмите «Показать границу на карте», чтобы увидеть.`; }
     if (c.id === LOCAL) toast(`📨 Предложение отправлено: ${o.name} (решает игрок)`, 'info'); return;
   }
   let ok = RNG() < dealChance({ id, ...d });
