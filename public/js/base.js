@@ -875,6 +875,7 @@ canvas.addEventListener('mousedown', e => {
 });
 let pendingClick = null;
 function doMapClick(wPos) {
+    if (currentTool === 'border') { borderClick(wPos); return; }
     let targetC = getCountryAtPos(wPos);
     if (currentTool === 'inspect' && targetC) {
         showCountryInfo(targetC);
