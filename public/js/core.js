@@ -229,7 +229,8 @@ window.processConvoys = function () {
     if (cv.pathIndex >= cv.path.length - 1) {
       let [tx, ty] = cv.path[cv.path.length - 1], gi = ty * OFF_W + tx;
       if (o && territoryOwner[gi] !== o.numericId) { let w = activeWars.find(x => x.id === cv.warId) || activeWars.find(x => x.a === cv.ownerId || x.b === cv.ownerId); let f = w && findWeakestFrontCellForSide(w, cv.ownerId); if (f) { tx = f.x; ty = f.y; gi = ty * OFF_W + tx; } else gi = -1; }
-      if (gi >= 0 && o) { spreadTroops(o.numericId, tx, ty, cv.power * (hasNearbyBuilding('supply', cv.ownerId, tx, ty, 30) ? 1.4 : 1)); if (div) { div.status = 'front'; if (cv.ownerId === LOCAL) mark(tx, ty, '🛡', `«${div.name}» прибыла на фронт`, 'good', 6); } }
+      if (gi >= 0 && o) { if (!div) spreadTroops(o.numericId, tx, ty, cv.power);
+      if (div) { div.status = 'front'; if (cv.ownerId === LOCAL) mark(tx, ty, '🛡', `«${div.name}» прибыла на фронт`, 'good', 6); } }
       else if (div) { div.status = 'active'; }
       convoys.splice(i, 1);
     }
@@ -316,16 +317,14 @@ function refreshUnits() {
     assignUnits(war.id, war.a, FA, sA); assignUnits(war.id, war.b, FB, sB);
   });
 }
-function assignUnits(wid, cid, F, sum) {
-  let free = units.filter(u => u.war === wid && u.owner === cid && !u.dead);
-  let cc = countryMap[cid], nd = cc && cc.army ? cc.army.divisions.filter(d => d.status === 'front' && d.warId === wid).length : 0;
-  let n = F.length ? Math.min(F.length, nd) : 0;
-  for (let i = 0; i < n; i++) {
-    let gi = F[Math.floor(i * F.length / n)], tx = gi % OFF_W + 0.5, ty = Math.floor(gi / OFF_W) + 0.5;
-    let bi = -1, bd = 1e9; free.forEach((u, j) => { let d = Math.hypot(u.x - tx, u.y - ty); if (d < bd) { bd = d; bi = j; } });
-    if (bi >= 0 && bd < 90) { let u = free.splice(bi, 1)[0]; u.px = u.x; u.py = u.y; u.x = tx; u.y = ty; }
-    else units.push({ id: unitId++, owner: cid, war: wid, px: tx, py: ty, x: tx, y: ty, born: dayCounter, dead: 0 });
-  }
+function assignUnits(wid, cid) {
+  let free = units.filter(u => u.war === wid && u.owner === cid && !u.dead), cc = countryMap[cid];
+  let ds = cc && cc.army ? cc.army.divisions.filter(d => d.status === 'front' && d.warId === wid && d._gi) : [];
+  ds.forEach(d => {
+    let gi = d._gi, tx = gi % OFF_W + 0.5, ty = Math.floor(gi / OFF_W) + 0.5, u = free.find(x => x.div === d.id);
+    if (u) { free.splice(free.indexOf(u), 1); u.px = u.x; u.py = u.y; u.x = tx; u.y = ty; }
+    else units.push({ id: unitId++, owner: cid, war: wid, div: d.id, px: tx, py: ty, x: tx, y: ty, born: dayCounter, dead: 0 });
+  });
   free.forEach(u => { u.px = u.x; u.py = u.y; u.dead = dayCounter; });
 }
 
