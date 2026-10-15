@@ -876,6 +876,10 @@ canvas.addEventListener('mousedown', e => {
 let pendingClick = null;
 function doMapClick(wPos) {
     if (currentTool === 'border') { borderClick(wPos); return; }
+    if (!currentTool || currentTool === "inspect") for (const u of units) if (!u.dead && Math.abs(u.x - wPos.x) < 2.5 && Math.abs(u.y - wPos.y) < 2) {
+        let o = countryMap[u.owner], d = o && o.army && o.army.divisions.find(x => x.id === u.div); if (!d) continue; let di = divInfo(d);
+        toast(`${o.name}: «${d.name}» — ${divComp(d)} · атака ${Math.round(di.atk)} · защита ${Math.round(di.def)} · сила ${Math.round(d.strength)}/${d.max || 100}`, 'info'); return;
+    }
     let targetC = getCountryAtPos(wPos);
     if (currentTool === 'inspect' && targetC) {
         showCountryInfo(targetC);
@@ -2754,6 +2758,8 @@ function computeLinePath(x0, y0, x1, y1) {
     return path;
 }
 
+function divInfo(d) { let a = 62, df = 62; if (d.b) { a = df = 0; for (let k in d.b) { a += d.b[k] * BAT[k][1]; df += d.b[k] * BAT[k][2]; } } let f = Math.max(0, d.strength) / (d.max || 100); return { atk: a * f, def: df * f }; }
+function divComp(d) { if (!d.b) return 'пехота'; return Object.keys(d.b).filter(k => d.b[k]).map(k => BAT[k][0].toLowerCase() + ' ' + d.b[k]).join(' · '); }
 function spawnConvoy(countryId, targetX, targetY, power, colorSide, warId) {
     let hubPos = getHubPosition(countryId);
     if (!hubPos) return false; // без военного узла перебрасывать некого
@@ -2951,50 +2957,47 @@ function processWars() {
         autoSpawnConvoy(frontB, reinforceB, war.b, 'b');
 
 
-        function resolveCombat(frontCells, myNum, enemyNum, ownerId, enemyOwnerId) {
-            frontCells.forEach(([rx, ry]) => {
-                let ri = ry * regionW + rx;
-                let myTroops = regionTroops[ri];
-                if (myTroops < 8) return;
-
-                let neighborsCoords = [[rx - 1, ry], [rx + 1, ry], [rx, ry - 1], [rx, ry + 1]];
-                let enemyNeighbors = neighborsCoords.filter(([nx, ny]) => ownerAt(nx, ny) === enemyNum);
-                if (enemyNeighbors.length === 0) return;
-
-                enemyNeighbors.sort((p1, p2) => regionTroops[p1[1] * regionW + p1[0]] - regionTroops[p2[1] * regionW + p2[0]]);
-                let tx = enemyNeighbors[0][0], ty = enemyNeighbors[0][1];
-                let ti = ty * regionW + tx;
-
-                let defTroops = regionTroops[ti];
-                let defenseMult = hasNearbyBuilding('defense', enemyOwnerId, minX + tx, minY + ty, 25) ? 2.0 : 1.0;
-                let defPower = defTroops * defenseMult * getCombatMult(enemyOwnerId, ownerId, "def");
-
-                let friendlyFlankers = neighborsCoords.filter(([nx, ny]) => ownerAt(nx, ny) === myNum).length;
-                let flankMult = 1.0;
-                if (friendlyFlankers === 2) flankMult = 1.3;
-                if (friendlyFlankers === 3) flankMult = 1.6;
-                if (friendlyFlankers === 4) flankMult = 2.2;
-                let attPower = myTroops * flankMult * getCombatMult(ownerId, enemyOwnerId, "att");
-
-                if (attPower > defPower * 1.05) {
-                    let defLosses = attPower * 0.14;
-                    let attLosses = (defPower / flankMult) * 0.09;
-                    nextTroops[ti] = Math.max(0, nextTroops[ti] - defLosses);
-                    nextTroops[ri] = Math.max(0, nextTroops[ri] - attLosses);
-                    if (nextTroops[ti] <= 0) {
-                        nextOwner[ti] = myNum; noteCapture(ownerId, enemyOwnerId, minX + tx, minY + ty);
-                        let moved = nextTroops[ri] * 0.6;
-                        nextTroops[ti] = moved;
-                        nextTroops[ri] -= moved;
-                        if (RNG() < 0.15 && (isHuman(ownerId) || isHuman(enemyOwnerId))) {
-                            addNewsEvent(`Бой на фронте: ${countryMap[ownerId].name} занимает сектор [${minX + tx},${minY + ty}]`, 'war');
+        // Бой дивизия против дивизии: каждая фронтовая дивизия держит участок линии (флажок = дивизия)
+        let cellDiv = new Map();
+        function assignDivs(frontCells, ownerId) {
+            let oc = countryMap[ownerId], L = frontCells.length;
+            let ds = oc.army && L ? oc.army.divisions.filter(d => d.status === 'front' && d.warId === war.id).sort((a, b) => a.id - b.id) : [], n = ds.length;
+            ds.forEach((d, i) => {
+                let s = Math.floor(i * L / n), e = Math.max(s + 1, Math.floor((i + 1) * L / n)), m = Math.min(L - 1, s + ((e - s) >> 1)), from = Math.max(s, m - 2), to = Math.min(L, e, from + 4);
+                d._seg = []; for (let k = from; k < to; k++) { let [rx, ry] = frontCells[k]; d._seg.push([rx, ry]); cellDiv.set(ry * regionW + rx, d); }
+                let [cx, cy] = frontCells[m]; d._gi = (minY + cy) * OFF_W + minX + cx;
+            });
+            return ds;
+        }
+        function resolveCombat(ds, myNum, enemyNum, ownerId, enemyOwnerId) {
+            ds.forEach(D => {
+                if (D.strength < (D.max || 100) * 0.3) return;
+                let di = divInfo(D);
+                D._seg.forEach(([rx, ry]) => {
+                    let nb = [[rx - 1, ry], [rx + 1, ry], [rx, ry - 1], [rx, ry + 1]], en = nb.filter(([nx, ny]) => ownerAt(nx, ny) === enemyNum);
+                    if (!en.length) return;
+                    en.sort((p1, p2) => regionTroops[p1[1] * regionW + p1[0]] - regionTroops[p2[1] * regionW + p2[0]]);
+                    let tx = en[0][0], ty = en[0][1], ti = ty * regionW + tx, E = cellDiv.get(ti);
+                    let defMult = hasNearbyBuilding('defense', enemyOwnerId, minX + tx, minY + ty, 25) ? 2.0 : 1.0;
+                    let defPower = (E ? divInfo(E).def : Math.min(15, regionTroops[ti])) * defMult * getCombatMult(enemyOwnerId, ownerId, "def");
+                    let fl = nb.filter(([nx, ny]) => ownerAt(nx, ny) === myNum).length, flank = fl === 2 ? 1.3 : fl === 3 ? 1.6 : fl === 4 ? 2.2 : 1;
+                    let attPower = di.atk * 0.6 * flank * getCombatMult(ownerId, enemyOwnerId, "att");
+                    if (attPower > defPower * 1.05) {          // наша сильнее: у них сила падает, мы продвигаемся
+                        if (E) E.strength = Math.max(1, E.strength - attPower * 0.05); else nextTroops[ti] = Math.max(0, nextTroops[ti] - attPower * 0.14);
+                        D.strength = Math.max(1, D.strength - defPower * 0.02);
+                        if (E ? E.strength < (E.max || 100) * 0.3 : nextTroops[ti] <= 0) {
+                            nextOwner[ti] = myNum; nextTroops[ti] = 4; noteCapture(ownerId, enemyOwnerId, minX + tx, minY + ty);
+                            if (RNG() < 0.15 && (isHuman(ownerId) || isHuman(enemyOwnerId))) addNewsEvent(`Бой на фронте: ${countryMap[ownerId].name} занимает сектор [${minX + tx},${minY + ty}]`, 'war');
                         }
+                    } else if (defPower > attPower * 1.05) {   // наша слабее: теряем силу и отходим
+                        D.strength = Math.max(1, D.strength - defPower * 0.04);
+                        if (E) E.strength = Math.max(1, E.strength - attPower * 0.01);
                     }
-                }
+                });
             });
         }
-        resolveCombat(frontA, aNum, bNum, war.a, war.b);
-        resolveCombat(frontB, bNum, aNum, war.b, war.a);
+        resolveCombat(assignDivs(frontA, war.a), aNum, bNum, war.a, war.b);
+        resolveCombat(assignDivs(frontB, war.b), bNum, aNum, war.b, war.a);
 
         for (let y = 0; y < regionH; y++) {
             for (let x = 0; x < regionW; x++) {
