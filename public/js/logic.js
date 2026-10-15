@@ -216,7 +216,7 @@ function govDay(c) {
   e.inflation = clamp(e.inflation + (0.02 - (e.rate - 5) * 0.012) + (c._printed || 0), 0, 60); e.inflation -= Math.max(0, e.inflation - 2) * 0.01; c._printed = 0;
   Object.keys(c.gov.cd).forEach(k => { if (c.gov.cd[k] <= currentTurn) delete c.gov.cd[k]; });
   if (g.stability < 10 && currentTurn % 15 === 0 && !g.crisis) { g.crisis = 1; mkDoc('Правительственный кризис', 'Массовые беспорядки. Требуются срочные меры.', 'Служба безопасности', [['Подавить силой (стабильность +10, одобрение -10)', () => { g.stability += 10; g.approval -= 10; g.crisis = 0; }], ['Объявить реформы (расход 6M, стабильность +20)', () => { e.budget -= 6; g.stability += 20; g.crisis = 0; }]], 6, 0); }
-  if (c.army.divisions.length) c.army.divisions.forEach(d => { if (d.status === 'active' && d.strength < d.max && e.res.oil > 0) d.strength = Math.min(d.max, d.strength + 0.15); if (d.status === 'active') d.xp = Math.min(100, (d.xp || 0) + 0.02); if (d.status === 'front') { d.xp = Math.min(100, (d.xp || 0) + 0.15); d.strength = Math.max(20, d.strength - 0.25); if (!activeWars.some(w => w.id === d.warId)) { d.status = 'active'; } } });
+  if (c.army.divisions.length) c.army.divisions.forEach(d => { if (d.status === 'active' && d.strength < d.max && e.res.oil > 0) d.strength = Math.min(d.max, d.strength + 0.15); if (d.status === 'active') d.xp = Math.min(100, (d.xp || 0) + 0.02); if (d.status === 'front') { d.xp = Math.min(100, (d.xp || 0) + 0.15); d.strength = Math.max(Math.min(d.strength, 20), d.strength - 0.25); if (!activeWars.some(w => w.id === d.warId)) { d.status = 'active'; } } });
 }
 window.updateCountryEconomics = function () {
   countries.forEach(c => {
@@ -294,7 +294,7 @@ A.orderDiv = function (ti, n) {
     if (q.rifles < s.rifles || q.guns < s.guns || q.tanks < s.tanks) return toast(`Не хватает вооружения: нужно ${s.rifles} ружей, ${s.guns} орудий, ${s.tanks} танков`, 'warn');
     c.economy.budget -= cost; c.economy.manpower -= mpNeed; q.rifles -= s.rifles; q.guns -= s.guns; q.tanks -= s.tanks;
     let days = Math.max(2, Math.round(s.days * (1 - minSkill(c, 'def') * .04))); let nid = c.army.divisions.reduce((m, d) => Math.max(m, d.id), 0) + 1;
-    c.army.divisions.push({ id: nid, name: `${nid}-я ${t.name.split(' ')[0].toLowerCase()} дивизия`, tpl: t.name, max: Math.round(100 * s.q), strength: Math.round(100 * s.q), xp: 0, status: 'training', daysLeft: days, army: 0, gen: 0 });
+    c.army.divisions.push({ id: nid, name: `${nid}-я ${t.name.split(' ')[0].toLowerCase()} дивизия`, tpl: t.name, b: Object.assign({}, t.b), max: Math.round(100 * s.q), strength: Math.round(100 * s.q), xp: 0, status: 'training', daysLeft: days, army: 0, gen: 0 });
   }
   toast('Формирование начато', 'good'); hubRender();
 };
