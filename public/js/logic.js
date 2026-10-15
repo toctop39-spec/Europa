@@ -333,13 +333,15 @@ function sendDivisions(wid, pct, quiet) {
   let c = me(), w = activeWars.find(x => x.id === wid); if (!w) return 0;
   let target = bestAttackCell(w, c.id) || findWeakestFrontCellForSide(w, c.id); if (!target) { if (!quiet) toast('На фронте нет доступных секторов', 'warn'); return 0; }
   let hp = getHubPosition(c.id, target.x, target.y); if (!hp) { if (!quiet) toast('Нет военного узла на вашей территории — войска некуда стягивать. Постройте узел.', 'warn'); return 0; }
-  let free = c.army.divisions.filter(d => d.status === 'active'); if (!free.length) { if (!quiet) toast('Нет свободных дивизий', 'warn'); return 0; }
+  let en = w.a === c.id ? w.b : w.a, free = c.army.divisions.filter(d => d.status === 'active' && (!d.post || d.post === en)); if (!free.length) { if (!quiet) toast('Нет свободных дивизий', 'warn'); return 0; }
   let n = Math.max(1, Math.ceil(free.length * pct / 100)), side = w.a === c.id ? 'a' : 'b', sent = 0;
   free.sort((a, b) => b.strength - a.strength).slice(0, n).forEach(d => { if (spawnConvoy(c.id, target.x, target.y, d.strength, side, w.id, d.id)) { d.status = 'marching'; d.warId = w.id; sent++; } });
   if (!sent && !quiet) toast('Нет сухопутного пути от узла к фронту по вашей территории — линия оборвана', 'warn');
   if (sent && !quiet) { let cv = convoys[convoys.length - 1]; toast(`🚚 Отправлено дивизий: ${sent}. Дорога до фронта ~${Math.ceil(cv.path.length / cv.speed)} дн.`, 'good'); }
   hubRender(); return sent;
 }
+A.setPost = function (di, cid) { let d = me().army.divisions.find(x => x.id === di); if (!d) return; d.post = cid || ''; hubRender(); };
+A.setArmyPost = function (aid, cid) { me().army.divisions.forEach(d => { if (d.army === aid) d.post = cid || ''; }); hubRender(); };
 A.recall = function (di) { let d = me().army.divisions.find(x => x.id === di); if (!d || d.status !== 'front') return; d.status = 'training'; d.daysLeft = 5; d.returning = 1; toast('Дивизия отозвана с фронта (5 дн. на возвращение)', 'info'); hubRender(); };
 A.autoSend = function () { me().autoSend = !me().autoSend; hubRender(); };
 function autoSendDivs() {
