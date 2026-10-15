@@ -318,7 +318,8 @@ function refreshUnits() {
 }
 function assignUnits(wid, cid, F, sum) {
   let free = units.filter(u => u.war === wid && u.owner === cid && !u.dead);
-  let n = F.length ? Math.min(F.length, clamp(Math.round(sum / 120), 4, 80)) : 0;
+  let cc = countryMap[cid], nd = cc && cc.army ? cc.army.divisions.filter(d => d.status === 'front' && d.warId === wid).length : 0;
+  let n = F.length ? Math.min(F.length, nd) : 0;
   for (let i = 0; i < n; i++) {
     let gi = F[Math.floor(i * F.length / n)], tx = gi % OFF_W + 0.5, ty = Math.floor(gi / OFF_W) + 0.5;
     let bi = -1, bd = 1e9; free.forEach((u, j) => { let d = Math.hypot(u.x - tx, u.y - ty); if (d < bd) { bd = d; bi = j; } });
