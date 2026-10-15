@@ -2932,15 +2932,20 @@ function processWars() {
         frontB.forEach(([rx, ry]) => { nextTroops[ry * regionW + rx] += 0.1; });
 
         function autoSpawnConvoy(frontCells, amount, ownerId, colorSide) {
-            if (frontCells.length === 0 || amount < 1.5) return;
-            let weakest = null, weakestTroops = Infinity;
-            frontCells.forEach(([rx, ry]) => {
-                let t = regionTroops[ry * regionW + rx];
-                if (!isHuman(ownerId) && difficulty >= 1) { let foe = colorSide === 'a' ? bNum : aNum, m = 1e9; [[rx-1,ry],[rx+1,ry],[rx,ry-1],[rx,ry+1]].forEach(([nx,ny]) => { if (ownerAt(nx,ny) === foe) m = Math.min(m, regionTroops[ny*regionW+nx]); }); t = m - t * 0.5; }
-                if (t < weakestTroops) { weakestTroops = t; weakest = [rx, ry]; }
+            let oc = countryMap[ownerId]; if (frontCells.length === 0 || !oc.army) return;
+            let enemy = war.a === ownerId ? war.b : war.a, act = oc.army.divisions.filter(d => d.status === 'active' && d.strength >= 20);
+            // дивизии, поставленные на границу с этим врагом, идут сразу; бот дополнительно шлёт одну свободную раз в 3 дня
+            let go = act.filter(d => d.post === enemy);
+            if (!isHuman(ownerId) && currentTurn % 3 === 0) go = go.concat(act.filter(d => !d.post).sort((a, b) => b.strength - a.strength).slice(0, 1));
+            go.forEach(d => {
+                let weakest = null, weakestTroops = Infinity;
+                frontCells.forEach(([rx, ry]) => {
+                    let t = regionTroops[ry * regionW + rx];
+                    if (!isHuman(ownerId) && difficulty >= 1) { let foe = colorSide === 'a' ? bNum : aNum, m = 1e9;[[rx - 1, ry], [rx + 1, ry], [rx, ry - 1], [rx, ry + 1]].forEach(([nx, ny]) => { if (ownerAt(nx, ny) === foe) m = Math.min(m, regionTroops[ny * regionW + nx]); }); t = m - t * 0.5; }
+                    if (t < weakestTroops) { weakestTroops = t; weakest = [rx, ry]; }
+                });
+                if (weakest && spawnConvoy(ownerId, minX + weakest[0], minY + weakest[1], d.strength, colorSide, war.id, d.id)) { d.status = 'marching'; d.warId = war.id; }
             });
-            if (!weakest) return;
-            spawnConvoy(ownerId, minX + weakest[0], minY + weakest[1], amount, colorSide);
         }
         autoSpawnConvoy(frontA, reinforceA, war.a, 'a');
         autoSpawnConvoy(frontB, reinforceB, war.b, 'b');
