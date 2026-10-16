@@ -473,7 +473,7 @@ function renderOffscreenMap() {
     
     // Also update smooth canvas for better rendering
     smoothCtx.imageSmoothingEnabled = true;
-    smoothCtx.imageSmoothingQuality = 'high';
+    smoothCtx.imageSmoothingQuality = 'low';
     smoothCtx.drawImage(offCanvas, 0, 0, OFF_W * 2, OFF_H * 2);
     
     // Always generate borders for now (can optimize later)
