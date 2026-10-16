@@ -95,11 +95,12 @@ function botWarDaily() {
   activeWars.slice().forEach(w => { let pw = isHuman(w.a) || isHuman(w.b); if (!pw && currentTurn - (w.t0 || currentTurn) > 45 && RNG() < 0.03) { activeWars = activeWars.filter(x => x !== w); endBotWar(w); addNewsEvent(`${countryMap[w.a].name} и ${countryMap[w.b].name} заключили перемирие`, 'war'); } });
 }
 function diffuseTroops() {
+  if (currentTurn % 3) return;
   activeWars.forEach(war => {
     let ca = countryMap[war.a], cb = countryMap[war.b]; if (!ca || !cb) return; const T = territoryOwner, { minX, minY, maxX, maxY } = war.bbox, W = maxX - minX + 1, H = maxY - minY + 1, aN = ca.numericId, bN = cb.numericId, d = new Float32Array(W * H);
     for (let y = Math.max(1, minY); y <= Math.min(OFF_H - 2, maxY); y++) for (let x = Math.max(1, minX); x <= Math.min(OFF_W - 2, maxX); x++) {
       let i = y * OFF_W + x, o = T[i]; if (o !== aN && o !== bN) continue; let t = warTroops[i]; if (t < 5) continue;
-      let rate = ((isHuman(war.a) && o === aN) || (isHuman(war.b) && o === bN)) ? 0.25 : 0.15 * difficulty, bt = t, bi = -1, nb;
+      let rate = Math.min(0.7, (((isHuman(war.a) && o === aN) || (isHuman(war.b) && o === bN)) ? 0.25 : 0.15 * difficulty) * 2.5), bt = t, bi = -1, nb;
       nb = i - 1; if (T[nb] === o && warTroops[nb] < bt) { bt = warTroops[nb]; bi = nb; } nb = i + 1; if (T[nb] === o && warTroops[nb] < bt) { bt = warTroops[nb]; bi = nb; }
       nb = i - OFF_W; if (T[nb] === o && warTroops[nb] < bt) { bt = warTroops[nb]; bi = nb; } nb = i + OFF_W; if (T[nb] === o && warTroops[nb] < bt) { bt = warTroops[nb]; bi = nb; }
       if (bi < 0 || t - bt < 2) continue; let mv = (t - bt) * rate; d[(y - minY) * W + (x - minX)] -= mv; let by = (bi / OFF_W) | 0, bx = bi % OFF_W; d[(by - minY) * W + (bx - minX)] += mv;
