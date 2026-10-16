@@ -252,7 +252,7 @@ window.updateWarOverlay = function () {
     }
     warOverlayCtx.putImageData(img, minX, minY);
   });
-  if (activeWars.length && currentTurn % 2 === 0) mapDirty = true;
+  if (activeWars.length && currentTurn % 4 === 0) mapDirty = true;
 };
 window.advanceTurn = function () { toast('Время нельзя пропустить: 1 день = 2 секунды', 'warn'); };
 window.skipDays = window.advanceTurn;
@@ -280,9 +280,11 @@ function drawUnits() {
 window.draw = function () {
   if (!ctx) return;
   ctx.clearRect(0, 0, width, height); ctx.save(); ctx.translate(panX, panY); ctx.scale(scale, scale);
-  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'medium';
-  ctx.drawImage(smoothCanvas, 0, 0, OFF_W, OFF_H);
-  if (warOverlayCanvas && activeWars.length) ctx.drawImage(warOverlayCanvas, 0, 0, OFF_W, OFF_H);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = scale < 1.3 ? 'low' : 'medium';
+  // рисуем только видимую часть карты; при малом масштабе берём уменьшенную копию (в 4 раза меньше пикселей)
+  { let sx = Math.max(0, Math.floor(-panX / scale) - 2), sy = Math.max(0, Math.floor(-panY / scale) - 2), ex = Math.min(OFF_W, Math.ceil((width - panX) / scale) + 2), ey = Math.min(OFF_H, Math.ceil((height - panY) / scale) + 2), sw = ex - sx, sh = ey - sy;
+    if (sw > 0 && sh > 0) { let src = scale < 1.3 && midOK ? midCanvas : smoothCanvas, k = src.width / OFF_W; ctx.drawImage(src, sx * k, sy * k, sw * k, sh * k, sx, sy, sw, sh);
+      if (warOverlayCanvas && activeWars.length) ctx.drawImage(warOverlayCanvas, sx, sy, sw, sh, sx, sy, sw, sh); } }
   const BI = { supply: '📦', defense: '🛡️', military: '🏰', port: '⚓' }; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   buildings.forEach(b => { let cfg = BUILDING_TYPES[b.type]; if (!cfg) return; let r = 7 / scale; ctx.fillStyle = cfg.color; ctx.strokeStyle = '#000'; ctx.lineWidth = 1 / scale; ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7); ctx.fill(); ctx.stroke();
     ctx.font = `${r * 1.35}px sans-serif`; ctx.fillStyle = '#fff'; ctx.fillText(BI[b.type] || '■', b.x, b.y + r * 0.08);
@@ -307,15 +309,7 @@ function refreshUnits() {
   units = units.filter(u => !u.dead || u.dead >= dayCounter);
   let alive = new Set(activeWars.map(w => w.id));
   units.forEach(u => { if (!u.dead && !alive.has(u.war)) u.dead = dayCounter; });
-  activeWars.forEach(war => {
-    let ca = countryMap[war.a], cb = countryMap[war.b]; if (!ca || !cb) return;
-    let aN = ca.numericId, bN = cb.numericId, FA = [], FB = [], sA = 0, sB = 0, { minX, minY, maxX, maxY } = war.bbox, T = territoryOwner;
-    for (let y = minY; y <= maxY; y++) for (let x = minX; x <= maxX; x++) {
-      let gi = y * OFF_W + x, id = T[gi]; if (id !== aN && id !== bN) continue; let o = id === aN ? bN : aN;
-      if (T[gi - 1] === o || T[gi + 1] === o || T[gi - OFF_W] === o || T[gi + OFF_W] === o) { if (id === aN) { FA.push(gi); sA += warTroops[gi]; } else { FB.push(gi); sB += warTroops[gi]; } }
-    }
-    assignUnits(war.id, war.a, FA, sA); assignUnits(war.id, war.b, FB, sB);
-  });
+  activeWars.forEach(war => { assignUnits(war.id, war.a); assignUnits(war.id, war.b); });
 }
 function assignUnits(wid, cid) {
   let free = units.filter(u => u.war === wid && u.owner === cid && !u.dead), cc = countryMap[cid];
@@ -329,12 +323,17 @@ function assignUnits(wid, cid) {
 }
 
 // ---------- РЕАЛЬНОЕ ВРЕМЯ ----------
-let lastFrame = 0;
+let lastFrame = 0, drawMs = 12, lastView = '';
 function frame(now) {
   dayProgress = clamp((performance.now() - dayStart) / DAY_MS, 0, 1);
-  if (now - lastFrame > 28 && !document.hidden) { lastFrame = now; draw(); let b = $('dayBar'); if (b) b.style.width = (dayProgress * 100) + '%'; }
+  // адаптивная частота: чем тяжелее кадр, тем реже рисуем; в покое (нет войн, колонн, меток) — редко
+  let view = panX + ',' + panY + ',' + scale, moving = view !== lastView, anim = activeWars.length || convoys.length || units.length || mapMarks.length, gap = Math.max(moving ? 16 : anim ? 50 : 200, drawMs * 2.2);
+  if (now - lastFrame > gap && !document.hidden) { lastFrame = now; lastView = view; let t0 = performance.now(); draw(); drawMs = drawMs * 0.7 + (performance.now() - t0) * 0.3; let b = $('dayBar'); if (b) b.style.width = (dayProgress * 100) + '%'; }
   requestAnimationFrame(frame);
 }
+// уменьшенная копия карты для малого масштаба
+const midCanvas = document.createElement('canvas'); midCanvas.width = OFF_W; midCanvas.height = OFF_H; const midCtx = midCanvas.getContext('2d'); let midOK = false;
+{ const _ro = window.renderOffscreenMap; window.renderOffscreenMap = function () { _ro(); try { midCtx.clearRect(0, 0, OFF_W, OFF_H); midCtx.imageSmoothingQuality = 'low'; midCtx.drawImage(smoothCanvas, 0, 0, OFF_W, OFF_H); midOK = true; } catch (e) { midOK = false; } }; }
 function gameTick() {
   if (gameOver) return;
   try { simulateOneDay(); } catch (e) { console.error('tick', e); }
