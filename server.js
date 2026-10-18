@@ -11,7 +11,7 @@ const compression = require('compression');
 const { WebSocketServer } = require('ws');
 
 const PORT = +process.env.PORT || 3000;
-const TICK_MS = +process.env.TICK_MS || 2000;
+const TICK_MS = +process.env.TICK_MS || 10000;
 const DIFFICULTY = +process.env.DIFFICULTY || 1;       // 0.6 лёгкая, 1 нормальная, 1.35 жёсткая
 const DATA_DIR = process.env.DATA_DIR || '';             // папка постоянного диска Render (необязательно)
 const MAX_PLAYERS = +process.env.MAX_PLAYERS || 40;
