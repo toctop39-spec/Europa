@@ -101,7 +101,7 @@ function mkDoc(title, body, from, opts, dl = 10, defIdx = -1) {
   docs.unshift(d); toast(`📄 Новый документ: ${title}`, 'doc'); return d;
 }
 A.docDo = function (id, i) {
-  let d = docs.find(x => x.id === id); if (!d || d.status !== 'pending' || d.owner !== playerCountryId || !d.opts[i]) return; d.status = 'done'; d.result = d.opts[i][0].replace(/\s*\([^)]*\)/g, ''); d.opts[i][1](); updatePlayerInfo(); if (window.hubRender) hubRender();
+  let d = docs.find(x => x.id === id); if (d) delete d._sent; if (!d || d.status !== 'pending' || d.owner !== playerCountryId || !d.opts[i]) return; d.status = 'done'; d.result = d.opts[i][0].replace(/\s*\([^)]*\)/g, ''); d.opts[i][1](); updatePlayerInfo(); if (window.hubRender) hubRender();
 };
 function docDeadlines() { docs.forEach(d => { if (d.owner !== playerCountryId || d.status !== 'pending' || currentTurn <= d.deadline) return; d.status = 'expired'; d.result = 'Срок истёк'; if (d.def >= 0) { d.opts[d.def][1](); d.result = 'Срок истёк: ' + d.opts[d.def][0].replace(/\s*\([^)]*\)/g, ''); } else { let c = me(); if (c) c.gov.approval -= 1; } }); }
 
@@ -302,13 +302,14 @@ A.saveTpl = function (name, b) {
   let c = me(), d = { name: String(name || '').slice(0, 40), b: b || {} }; Object.keys(d.b).forEach(k => { d.b[k] = clamp(Math.floor(+d.b[k] || 0), 0, 14); }); if (!d.name.trim()) return toast('Введите название шаблона', 'warn'); if (tplStats(d).n < 1 || tplStats(d).n > 14) return toast('Шаблон: 1-14 батальонов', 'warn');
   c.mil.tpl.push({ name: d.name, b: Object.assign({}, d.b) }); toast('Шаблон сохранён', 'good'); hubRender();
 };
+A.reinfAll = function () { me().army.divisions.filter(d => d.status !== 'training' && d.strength < d.max).forEach(d => A.reinf(d.id)); hubRender(); };
 A.reinf = function (di) { let c = me(), d = c.army.divisions.find(x => x.id === di); if (!d) return; let need = d.max - d.strength, cost = need * 0.03 * costMult(c), mp = need * 150; if (need < 1) return; if (c.economy.budget < cost || c.economy.manpower < mp) return toast('Не хватает денег или людей', 'warn'); c.economy.budget -= cost; c.economy.manpower -= mp; d.strength = d.max; hubRender(); };
 A.disband = function (di) { let c = me(); let d = c.army.divisions.find(x => x.id === di); if (!d) return; c.economy.manpower += d.strength * 40; c.army.divisions = c.army.divisions.filter(x => x.id !== di); hubRender(); };
 A.hireGen = function (id) { let c = me(), g = c.mil.pool.find(x => x.id === id); if (!g || c.gov.pp < 25) return toast('Нужно 25 политвл.', 'warn'); c.gov.pp -= 25; c.mil.gens.push(g); c.mil.pool = c.mil.pool.filter(x => x.id !== id); hubRender(); };
 A.newArmy = function () { let c = me(); c.mil.armies.push({ id: armyId++, name: `${c.mil.armies.length + 1}-я армия`, stance: 1, gen: 0 }); hubRender(); };
 A.setStance = function (id, s) { me().mil.armies.find(a => a.id === id).stance = s; hubRender(); };
 A.armyGen = function (id, g) { me().mil.armies.find(a => a.id === id).gen = +g; hubRender(); };
-A.divArmy = function (di, a) { me().army.divisions.find(d => d.id === di).army = +a; hubRender(); };
+A.divArmy = function (di, a) { let d = me().army.divisions.find(d => d.id === di); if (d) { d.army = +a; delete d._pend; } hubRender(); };
 A.setLine = function (k, v) { me().mil.lines[k] = +v; };
 A.setCiv = function (v) { me().factoryCivRatio = v / 100; hubRender(); };
 A.research = function (id) {
@@ -433,9 +434,7 @@ function botAI() {
     let cands = [...c.neighbors].filter(n => countryMap[n] && (truces[c.id + n] || 0) < currentTurn && !activeWarsOf(n) && ((diplomaticRelations[c.id][n] || {}).status === 'hostile') && !activePact(c.id, n));
     let t = pick(cands); if (!t) return; let tc = countryMap[t]; if (!tc) return;
     if (isHuman(t)) { if (currentTurn - (tc._joinTurn || 0) < 40 || tc._defeated) return; if (RNG() > .5) return; botWarOnPlayer(c, t); return; }
-    if (tc.army.divisions.length * 1.2 > c.army.divisions.length) return;
-    diplomaticRelations[c.id][t].status = 'at_war'; diplomaticRelations[t][c.id].status = 'at_war'; startWar(c.id, t); mapDirty = true; callAllies(c.id, t);
-    addNewsEvent(`${c.name} объявляет войну ${tc.name}!`, 'war'); toast(`⚔ ${c.name} объявила войну ${tc.name}`, 'war');
+    return;   // ИИ не объявляет войны другому ИИ — воюют только с игроками
   });
 }
 function botWarOnPlayer(b, pid) {
