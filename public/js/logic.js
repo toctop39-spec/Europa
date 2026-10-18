@@ -92,7 +92,7 @@ function initHuman(c, late) {
   if (!validHubs(c.id).length) { let cap = capitalOf(c); if (cap) buildings.push({ id: buildingIdCounter++, type: 'military', x: cap.x, y: cap.y, ownerId: c.id, civRatio: .5, status: 'active', daysLeft: 0 }); }
   c.autoSend = true; genPool(c); Object.keys(MINISTRIES).forEach(k => minPool(c, k));
   c.gov.min.fin = { name: personName(), skill: 2 }; c.gov.min.def = { name: personName(), skill: 2 };
-  mkDoc('Приказ №1 о вступлении в должность', `Правительство страны «${c.name}» приступает к работе. Время идёт непрерывно: 1 день = 2 секунды. Изучите разделы «Правительство», «Экономика», «Строительство» и «Армия» в Штабе.`, 'Канцелярия', [['К исполнению', () => { }]], 60);
+  mkDoc('Приказ №1 о вступлении в должность', `Правительство страны «${c.name}» приступает к работе. Время идёт непрерывно: 1 день = 10 секунд. Изучите разделы «Правительство», «Экономика», «Строительство» и «Армия» в Штабе.`, 'Канцелярия', [['К исполнению', () => { }]], 60);
 }
 
 // ---------- документы ----------
