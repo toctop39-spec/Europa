@@ -1,5 +1,5 @@
 // ===== V3 CORE: utils, flags, real-time, units =====
-const DAY_MS = 2000;
+const DAY_MS = 10000;
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rnd = (a, b) => a + RNG() * (b - a);
@@ -254,7 +254,7 @@ window.updateWarOverlay = function () {
   });
   if (activeWars.length && currentTurn % 4 === 0) mapDirty = true;
 };
-window.advanceTurn = function () { toast('Время нельзя пропустить: 1 день = 2 секунды', 'warn'); };
+window.advanceTurn = function () { toast('Время нельзя пропустить: 1 день = 10 секунд', 'warn'); };
 window.skipDays = window.advanceTurn;
 
 // ---------- РИСОВАНИЕ ----------
@@ -333,7 +333,12 @@ function frame(now) {
 }
 // уменьшенная копия карты для малого масштаба
 const midCanvas = document.createElement('canvas'); midCanvas.width = OFF_W; midCanvas.height = OFF_H; const midCtx = midCanvas.getContext('2d'); let midOK = false;
-{ const _ro = window.renderOffscreenMap; window.renderOffscreenMap = function () { _ro(); try { midCtx.clearRect(0, 0, OFF_W, OFF_H); midCtx.imageSmoothingQuality = 'low'; midCtx.drawImage(smoothCanvas, 0, 0, OFF_W, OFF_H); midOK = true; } catch (e) { midOK = false; } }; }
+{ const _ro = window.renderOffscreenMap; let lastSig = '';
+  window.renderOffscreenMap = function () {
+    // пропускаем перерисовку, если территории и цвета не изменились (раньше карта пересобиралась каждый день)
+    let h = 0, T = territoryOwner; for (let i = 0; i < T.length; i++) h = (Math.imul(h, 31) + T[i]) | 0;
+    let rel = diplomaticRelations[playerCountryId], sig = h + '|' + playerCountryId + '|' + (rel ? Object.keys(rel).map(k => rel[k].status[0]).join('') : '');
+    if (sig === lastSig) return; lastSig = sig; _ro(); try { midCtx.clearRect(0, 0, OFF_W, OFF_H); midCtx.imageSmoothingQuality = 'low'; midCtx.drawImage(smoothCanvas, 0, 0, OFF_W, OFF_H); midOK = true; } catch (e) { midOK = false; } }; }
 function gameTick() {
   if (gameOver) return;
   try { simulateOneDay(); } catch (e) { console.error('tick', e); }
@@ -382,7 +387,7 @@ function startPanel() {
 }
 A.start = function () {
   if (gameStarted) return; gameStarted = true; initPlayer(); startPanel(); dayStart = performance.now(); setInterval(gameTick, DAY_MS);
-  toast('Игра началась! Время идёт: 1 день = 2 секунды', 'good'); updatePlayerInfo(); mapDirty = true; setTimeout(() => { A.hub('hq'); }, 300);
+  toast('Игра началась! Время идёт: 1 день = 10 секунд', 'good'); updatePlayerInfo(); mapDirty = true; setTimeout(() => { A.hub('hq'); }, 300);
 };
 const _initGrid = initGrid;
 window.initGrid = async function () {
