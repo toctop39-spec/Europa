@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>::: EUROPA STRATEGY ONLINE v4.5 ::: РўРђРљРўРР§Р•РЎРљРР™ РЁРўРђР‘ Р’РћР™РќР« :::</title>
+<title>::: EUROPA STRATEGY ONLINE v4.5 ::: ТАКТИЧЕСКИЙ ШТАБ ВОЙНЫ :::</title>
 <!-- Tailwind CSS for functional utility classes -->
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- FontAwesome for classic icons -->
@@ -332,7 +332,7 @@ td.footer a { color: #fef08a; }
 <!-- HEADER -->
 <tr>
   <td colspan="2" class="header">
-    EUROPA STRATEGY ONLINE v7.0 В· Р Р•РђР›Р¬РќРћР• Р’Р Р•РњРЇ     <small>Р“РµРѕРїРѕР»РёС‚РёС‡РµСЃРєРёР№ СЃРёРјСѓР»СЏС‚РѕСЂ В· Р­РєРѕРЅРѕРјРёРєР°, РґРёРїР»РѕРјР°С‚РёСЏ Рё РєР°СЃС‚РѕРјРЅС‹Рµ РґРѕРіРѕРІРѕСЂС‹</small>
+    EUROPA STRATEGY ONLINE v7.0 · РЕАЛЬНОЕ ВРЕМЯ     <small>Геополитический симулятор · Экономика, дипломатия и кастомные договоры</small>
   </td>
 </tr>
 
@@ -340,7 +340,7 @@ td.footer a { color: #fef08a; }
 <tr>
   <td colspan="2" class="ticker">
     <marquee scrollamount="3">
-      *** Р”Р•РќР¬ <span id="tickerTurn">1</span>: РЈРїСЂР°РІР»СЏР№С‚Рµ СЌРєРѕРЅРѕРјРёРєРѕР№ С‡РµСЂРµР· РЅР°Р»РѕРіРё Рё РёРЅРІРµСЃС‚РёС†РёРё *** Р‘РµСЂРёС‚Рµ РєСЂРµРґРёС‚С‹ Рё РґР°РІР°Р№С‚Рµ РёС… РґСЂСѓРіРёРј СЃС‚СЂР°РЅР°Рј *** РЎРѕР·РґР°РІР°Р№С‚Рµ РєР°СЃС‚РѕРјРЅС‹Рµ РґРѕРіРѕРІРѕСЂС‹ СЃ РіР°СЂР°РЅС‚РёСЏРјРё РІС‹РїРѕР»РЅРµРЅРёСЏ *** РЈСЃС‚Р°РЅР°РІР»РёРІР°Р№С‚Рµ РґРёРїР»РѕРјР°С‚РёС‡РµСЃРєРёРµ РѕС‚РЅРѕС€РµРЅРёСЏ *** РЎР»РµРґРёС‚Рµ Р·Р° СѓРІРµРґРѕРјР»РµРЅРёСЏРјРё Рё РЅРѕРІРѕСЃС‚СЏРјРё ***
+      *** ДЕНЬ <span id="tickerTurn">1</span>: Управляйте экономикой через налоги и инвестиции *** Берите кредиты и давайте их другим странам *** Создавайте кастомные договоры с гарантиями выполнения *** Устанавливайте дипломатические отношения *** Следите за уведомлениями и новостями ***
     </marquee>
   </td>
 </tr>
@@ -348,7 +348,7 @@ td.footer a { color: #fef08a; }
 <!-- NAVIGATION -->
 <tr>
   <td colspan="2" class="nav">
-    <a href="#" onclick="A.hub('hq')">РЁРўРђР‘</a><a href="#" onclick="A.hub('gov')">РџР РђР’РРўР•Р›Р¬РЎРўР’Рћ</a><a href="#" onclick="A.hub('econ')">Р­РљРћРќРћРњРРљРђ</a><a href="#" onclick="A.hub('build')">РЎРўР РћРРўР•Р›Р¬РЎРўР’Рћ</a><a href="#" onclick="A.hub('mil')">РђР РњРРЇ</a><a href="#" onclick="A.hub('tech')">РќРђРЈРљРђ</a><a href="#" onclick="A.hub('dipl')">Р”РРџР›РћРњРђРўРРЇ</a><a href="#" onclick="A.hub('docs')">РљРђРќР¦Р•Р›РЇР РРЇ <b id="docBadge" class="bd" style="display:none">0</b></a><a href="#" onclick="A.hub('flag')">Р¤Р›РђР“</a>
+    <a href="#" onclick="A.hub('hq')">ШТАБ</a><a href="#" onclick="A.hub('gov')">ПРАВИТЕЛЬСТВО</a><a href="#" onclick="A.hub('econ')">ЭКОНОМИКА</a><a href="#" onclick="A.hub('build')">СТРОИТЕЛЬСТВО</a><a href="#" onclick="A.hub('mil')">АРМИЯ</a><a href="#" onclick="A.hub('tech')">НАУКА</a><a href="#" onclick="A.hub('dipl')">ДИПЛОМАТИЯ</a><a href="#" onclick="A.hub('docs')">КАНЦЕЛЯРИЯ <b id="docBadge" class="bd" style="display:none">0</b></a><a href="#" onclick="A.hub('flag')">ФЛАГ</a>
   </td>
 </tr>
 
@@ -358,65 +358,65 @@ td.footer a { color: #fef08a; }
 <td class="left">
 
   <div class="panel">
-    <div class="panel-title">в–є РЎРўРђРўРЈРЎ РљРћРњРђРќР”РћР’РђРќРРЇ</div>
+    <div class="panel-title">► СТАТУС КОМАНДОВАНИЯ</div>
     <div class="panel-body">
       <div class="indicator-box">
-        <span class="label">РЎС‚СЂР°РЅР°:</span>
-        <span class="value" id="playerCountryBadge">Р“Р•Р РњРђРќРРЇ</span>
+        <span class="label">Страна:</span>
+        <span class="value" id="playerCountryBadge">ГЕРМАНИЯ</span>
       </div>
       <div class="indicator-box">
-        <span class="label">Р‘СЋРґР¶РµС‚:</span>
+        <span class="label">Бюджет:</span>
         <span class="value" id="budgetDisplay">$10.5M</span>
       </div>
       <div class="indicator-box">
-        <span class="label">Р”РѕС…РѕРґ/Р”РµРЅСЊ:</span>
+        <span class="label">Доход/День:</span>
         <span class="value" id="incomeDisplay" style="color:#166534;">+$0.1M</span>
       </div>
       <div class="indicator-box">
-        <span class="label">Р Р°СЃС…РѕРґС‹/Р”РµРЅСЊ:</span>
+        <span class="label">Расходы/День:</span>
         <span class="value" id="expensesDisplay" style="color:#991b1b;">-$0.05M</span>
       </div>
       <div class="indicator-box">
-        <span class="label">Р”РѕР»Рі:</span>
+        <span class="label">Долг:</span>
         <span class="value" id="debtDisplay">$0M</span>
       </div>
       <div class="indicator-box">
-        <span class="label">Р РµР№С‚РёРЅРі:</span>
+        <span class="label">Рейтинг:</span>
         <span class="value" id="creditRatingDisplay">AAA</span>
       </div>
       <div class="indicator-box">
-        <span class="label">РќР°Р»РѕРі:</span>
+        <span class="label">Налог:</span>
         <span class="value" id="taxRateDisplay">20%</span>
       </div>
       <div class="indicator-box">
-        <span class="label">РќР°СЃРµР»РµРЅРёРµ:</span>
+        <span class="label">Население:</span>
         <span class="value" id="populationDisplay">85.2M</span>
       </div>
       <div class="indicator-box">
-        <span class="label">Р›СЋРґ. СЂРµСЃСѓСЂСЃС‹:</span>
-        <span class="value" id="manpowerDisplay">0 С‚С‹СЃ.</span>
+        <span class="label">Люд. ресурсы:</span>
+        <span class="value" id="manpowerDisplay">0 тыс.</span>
       </div>
       <div class="indicator-box">
-        <span class="label">Р’Р’Рџ:</span>
+        <span class="label">ВВП:</span>
         <span class="value" id="gdpDisplay">$45.2B</span>
       </div>
       <div class="indicator-box">
-        <span class="label">Р’Р»РёСЏРЅРёРµ:</span>
+        <span class="label">Влияние:</span>
         <span class="value" id="influenceDisplay">75</span>
       </div>
       <div class="bar"><div class="bar-fill" id="influenceBar" style="width:75%"></div></div>
-      <div class="indicator-box"><span class="label">РћРґРѕР±СЂРµРЅРёРµ:</span><span class="value" id="approvalDisplay">-</span></div>
-      <div class="indicator-box"><span class="label">РЎС‚Р°Р±РёР»СЊРЅРѕСЃС‚СЊ:</span><span class="value" id="stabilityDisplay">-</span></div>
-      <div class="indicator-box"><span class="label">РџРѕР»РёС‚РІР»Р°СЃС‚СЊ:</span><span class="value" id="ppDisplay">-</span></div>
-      <div class="indicator-box"><span class="label">РРЅС„Р»СЏС†РёСЏ:</span><span class="value" id="inflDisplay">-</span></div>
-      <div style="margin-top:6px;border:1px solid #64748b;padding:4px;background:#f1f5f9;text-align:center"><img id="sideFlag" style="width:60px;border:1px solid #000"><br><b>Р”Р•РќР¬ <span id="turnDisplay">1</span></b><div class="pb"><div id="dayBar" style="width:0;background:#16a34a"></div></div><small>1 РґРµРЅСЊ = 2 СЃРµРє. Р’СЂРµРјСЏ РЅРµР»СЊР·СЏ РїСЂРѕРїСѓСЃС‚РёС‚СЊ</small></div>
+      <div class="indicator-box"><span class="label">Одобрение:</span><span class="value" id="approvalDisplay">-</span></div>
+      <div class="indicator-box"><span class="label">Стабильность:</span><span class="value" id="stabilityDisplay">-</span></div>
+      <div class="indicator-box"><span class="label">Политвласть:</span><span class="value" id="ppDisplay">-</span></div>
+      <div class="indicator-box"><span class="label">Инфляция:</span><span class="value" id="inflDisplay">-</span></div>
+      <div style="margin-top:6px;border:1px solid #64748b;padding:4px;background:#f1f5f9;text-align:center"><img id="sideFlag" style="width:60px;border:1px solid #000"><br><b>ДЕНЬ <span id="turnDisplay">1</span></b><div class="pb"><div id="dayBar" style="width:0;background:#16a34a"></div></div><small>1 день = 2 сек. Время нельзя пропустить</small></div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-title">в–є Р’Р«Р‘РћР  РЎРўР РђРќР«</div>
+    <div class="panel-title">► ВЫБОР СТРАНЫ</div>
     <div class="panel-body">
-      <input type="text" id="countrySearch" placeholder="РџРѕРёСЃРє СЃС‚СЂР°РЅС‹..." oninput="filterCountryList()" style="width:100%; font-family:Verdana; font-size:10px; padding:3px; margin-bottom:4px;">
+      <input type="text" id="countrySearch" placeholder="Поиск страны..." oninput="filterCountryList()" style="width:100%; font-family:Verdana; font-size:10px; padding:3px; margin-bottom:4px;">
       <div style="max-height: 140px; overflow-y: auto;" id="countryListContainer">
         <!-- Populated dynamically -->
       </div>
@@ -424,9 +424,9 @@ td.footer a { color: #fef08a; }
   </div>
 
   <div class="panel">
-    <div class="panel-title">в–є Р‘Р«РЎРўР Р«Р• Р”Р•Р™РЎРўР’РРЇ</div>
+    <div class="panel-title">► БЫСТРЫЕ ДЕЙСТВИЯ</div>
     <div class="panel-body">
-      <button onclick="A.hub('hq')" class="btn">РЁРўРђР‘</button><button onclick="A.hub('docs')" class="btn">РљРђРќР¦Р•Р›РЇР РРЇ</button><button onclick="A.hub('mil')" class="btn">РђР РњРРЇ Р Р¤Р РћРќРўР«</button><button onclick="A.hub('econ')" class="btn">Р­РљРћРќРћРњРРљРђ</button><button onclick="A.hub('build')" class="btn">РЎРўР РћРРўР•Р›Р¬РЎРўР’Рћ</button><button onclick="openChatModal()" class="btn">Р§РђРўР«</button><button onclick="openNewsModal()" class="btn">РќРћР’РћРЎРўР</button><button onclick="resetCamera()" class="btn">Р¦Р•РќРўР РР РћР’РђРўР¬ РљРђР РўРЈ</button>
+      <button onclick="A.hub('hq')" class="btn">ШТАБ</button><button onclick="A.hub('docs')" class="btn">КАНЦЕЛЯРИЯ</button><button onclick="A.hub('mil')" class="btn">АРМИЯ И ФРОНТЫ</button><button onclick="A.hub('econ')" class="btn">ЭКОНОМИКА</button><button onclick="A.hub('build')" class="btn">СТРОИТЕЛЬСТВО</button><button onclick="openChatModal()" class="btn">ЧАТЫ</button><button onclick="openNewsModal()" class="btn">НОВОСТИ</button><button onclick="resetCamera()" class="btn">ЦЕНТРИРОВАТЬ КАРТУ</button>
     </div>
   </div>
 
@@ -437,29 +437,29 @@ td.footer a { color: #fef08a; }
 
   <div class="map-header">
     <div>
-      РћРџР•Р РђРўРР’РќР«Р™ РўР•РђРўР  Р’РћР•РќРќР«РҐ Р”Р•Р™РЎРўР’РР™
+      ОПЕРАТИВНЫЙ ТЕАТР ВОЕННЫХ ДЕЙСТВИЙ
     </div>
     <div>
-      Р”РђРўРђ: <b id="dateDisplay">01 РЇРЅРІ 2009</b> &nbsp;|&nbsp; РҐРћР”: <b id="headerTurn">1</b>
+      ДАТА: <b id="dateDisplay">01 Янв 2009</b> &nbsp;|&nbsp; ХОД: <b id="headerTurn">1</b>
     </div>
   </div>
 
   <!-- TOP TOOLBAR -->
   <div class="map-toolbar">
-    <span style="font-weight:bold; color:#1e3a8a;"><i class="fa-solid fa-globe"></i> Р“Р•РћРџРћР›РРўРРљРђ:</span>
-    <button id="toolInspect" onclick="setTool('inspect')" class="btn small active-tool" style="width:auto; margin:0;"><i class="fa-solid fa-magnifying-glass"></i> РРќРЎРџР•РљР¦РРЇ</button>
-    <button onclick="openCountryInfoModal()" class="btn small" style="width:auto; margin:0;"><i class="fa-solid fa-scroll"></i> РЎРўРђРўРРЎРўРРљРђ</button>
-    <button onclick="openDiplomacyModal()" class="btn small" style="width:auto; margin:0;"><i class="fa-solid fa-handshake"></i> Р”РРџР›РћРњРђРўРРЇ</button>
-    <button onclick="openChatModal()" class="btn small" style="width:auto; margin:0;"><i class="fa-solid fa-comments"></i> Р§РђРўР«</button>
-    <button onclick="openTreatiesModal()" class="btn small" style="width:auto; margin:0;"><i class="fa-solid fa-file-contract"></i> Р”РћР“РћР’РћР Р«</button>
+    <span style="font-weight:bold; color:#1e3a8a;"><i class="fa-solid fa-globe"></i> ГЕОПОЛИТИКА:</span>
+    <button id="toolInspect" onclick="setTool('inspect')" class="btn small active-tool" style="width:auto; margin:0;"><i class="fa-solid fa-magnifying-glass"></i> ИНСПЕКЦИЯ</button>
+    <button onclick="openCountryInfoModal()" class="btn small" style="width:auto; margin:0;"><i class="fa-solid fa-scroll"></i> СТАТИСТИКА</button>
+    <button onclick="openDiplomacyModal()" class="btn small" style="width:auto; margin:0;"><i class="fa-solid fa-handshake"></i> ДИПЛОМАТИЯ</button>
+    <button onclick="openChatModal()" class="btn small" style="width:auto; margin:0;"><i class="fa-solid fa-comments"></i> ЧАТЫ</button>
+    <button onclick="openTreatiesModal()" class="btn small" style="width:auto; margin:0;"><i class="fa-solid fa-file-contract"></i> ДОГОВОРЫ</button>
   </div>
 
   <div class="canvas-container">
     <!-- Loading Overlay -->
     <div id="loadingOverlay">
       <i class="fa-solid fa-satellite-dish text-3xl mb-2 text-emerald-400 animate-pulse"></i>
-      <div style="font-weight:bold; font-size:12px; letter-spacing:1px;">РРќРР¦РРђР›РР—РђР¦РРЇ Р“Р•РћРџРћР›РРўРР§Р•РЎРљРћР™ РЎР•РўРљР...</div>
-      <div id="loadingStatusText" style="font-size:10px; color:#888; margin-top:4px;">Р—Р°РіСЂСѓР·РєР° РІРµРєС‚РѕСЂРЅС‹С… РїРѕР»РёРіРѕРЅРѕРІ РјРёСЂР°...</div>
+      <div style="font-weight:bold; font-size:12px; letter-spacing:1px;">ИНИЦИАЛИЗАЦИЯ ГЕОПОЛИТИЧЕСКОЙ СЕТКИ...</div>
+      <div id="loadingStatusText" style="font-size:10px; color:#888; margin-top:4px;">Загрузка векторных полигонов мира...</div>
     </div>
 
     <canvas id="warCanvas"></canvas><div id="startPanel"></div>
@@ -471,8 +471,8 @@ td.footer a { color: #fef08a; }
 <!-- FOOTER -->
 <tr>
   <td colspan="2" class="footer">
-    &copy; 1998вЂ“2004 EUROPA STRATEGY ONLINE. Р’СЃРµ РїСЂР°РІР° Р·Р°С‰РёС‰РµРЅС‹.
-    &nbsp;|&nbsp; РЎРµСЂРІРµСЂ в„– <span class="counter">0094182</span>
+    &copy; 1998–2004 EUROPA STRATEGY ONLINE. Все права защищены.
+    &nbsp;|&nbsp; Сервер № <span class="counter">0094182</span>
   </td>
 </tr>
 
@@ -482,7 +482,7 @@ td.footer a { color: #fef08a; }
 <div id="diplomacyModal" class="retro-modal">
   <div class="retro-modal-box" style="width:500px;">
     <div class="retro-modal-title">
-      <span>Р”РРџР›РћРњРђРўРР§Р•РЎРљРР• РћРўРќРћРЁР•РќРРЇ</span>
+      <span>ДИПЛОМАТИЧЕСКИЕ ОТНОШЕНИЯ</span>
       <span style="cursor:pointer;" onclick="closeDiplomacyModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:400px; overflow-y:auto;">
@@ -495,7 +495,7 @@ td.footer a { color: #fef08a; }
 <div id="chatModal" class="retro-modal">
   <div class="retro-modal-box" style="width:400px;">
     <div class="retro-modal-title">
-      <span>Р”РРџР›РћРњРђРўРР§Р•РЎРљРђРЇ РџР•Р Р•РџРРЎРљРђ</span>
+      <span>ДИПЛОМАТИЧЕСКАЯ ПЕРЕПИСКА</span>
       <span style="cursor:pointer;" onclick="closeChatModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:400px; overflow-y:auto;">
@@ -508,16 +508,16 @@ td.footer a { color: #fef08a; }
 <div id="chatConversationModal" class="retro-modal">
   <div class="retro-modal-box" style="width:450px;">
     <div class="retro-modal-title">
-      <span id="chatCountryName">РџР•Р Р•РџРРЎРљРђ</span>
+      <span id="chatCountryName">ПЕРЕПИСКА</span>
       <span style="cursor:pointer;" onclick="closeChatConversationModal()">[X]</span>
     </div>
     <div class="retro-modal-body">
       <div id="chatMessages" style="max-height:250px; overflow-y:auto; border:1px inset #94a3b8; padding:6px; margin-bottom:8px; background:#f8fafc;"></div>
-      <textarea id="chatMessageInput" style="width:100%; font-family:Verdana; font-size:10px; padding:4px; margin-bottom:8px; resize:vertical; min-height:60px;" placeholder="Р’РІРµРґРёС‚Рµ СЃРѕРѕР±С‰РµРЅРёРµ..."></textarea>
+      <textarea id="chatMessageInput" style="width:100%; font-family:Verdana; font-size:10px; padding:4px; margin-bottom:8px; resize:vertical; min-height:60px;" placeholder="Введите сообщение..."></textarea>
       <input type="hidden" id="chatTargetCountry">
       <div style="text-align:right;">
-        <button onclick="closeChatConversationModal()" class="btn small" style="display:inline-block; width:auto;">РћРўРњР•РќРђ</button>
-        <button onclick="sendChatFromModal()" class="btn small" style="display:inline-block; width:auto;">РћРўРџР РђР’РРўР¬</button>
+        <button onclick="closeChatConversationModal()" class="btn small" style="display:inline-block; width:auto;">ОТМЕНА</button>
+        <button onclick="sendChatFromModal()" class="btn small" style="display:inline-block; width:auto;">ОТПРАВИТЬ</button>
       </div>
     </div>
   </div>
@@ -527,13 +527,13 @@ td.footer a { color: #fef08a; }
 <div id="treatiesModal" class="retro-modal">
   <div class="retro-modal-box" style="width:450px;">
     <div class="retro-modal-title">
-      <span>РњР•Р–Р”РЈРќРђР РћР”РќР«Р• Р”РћР“РћР’РћР Р«</span>
+      <span>МЕЖДУНАРОДНЫЕ ДОГОВОРЫ</span>
       <span style="cursor:pointer;" onclick="closeTreatiesModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:400px; overflow-y:auto;">
       <div id="treatiesContent"></div>
       <div style="text-align:center; margin-top:8px;">
-        <button onclick="openCreateTreatyModal()" class="btn small" style="display:inline-block; width:auto;">+ РџР Р•Р”Р›РћР–РРўР¬ Р”РћР“РћР’РћР </button>
+        <button onclick="openCreateTreatyModal()" class="btn small" style="display:inline-block; width:auto;">+ ПРЕДЛОЖИТЬ ДОГОВОР</button>
       </div>
     </div>
   </div>
@@ -543,24 +543,24 @@ td.footer a { color: #fef08a; }
 <div id="createTreatyModal" class="retro-modal">
   <div class="retro-modal-box" style="width:380px;">
     <div class="retro-modal-title">
-      <span>РџР Р•Р”Р›РћР–РРўР¬ Р”РћР“РћР’РћР </span>
+      <span>ПРЕДЛОЖИТЬ ДОГОВОР</span>
       <span style="cursor:pointer;" onclick="closeCreateTreatyModal()">[X]</span>
     </div>
     <div class="retro-modal-body">
-      <div style="margin-bottom:6px; font-weight:bold;">Р’С‹Р±РµСЂРёС‚Рµ РіРѕСЃСѓРґР°СЂСЃС‚РІРѕ:</div>
+      <div style="margin-bottom:6px; font-weight:bold;">Выберите государство:</div>
       <select id="treatyCountrySelect" style="width:100%; font-family:Verdana; font-size:10px; padding:3px; margin-bottom:8px;"></select>
       
-      <div style="margin-bottom:6px; font-weight:bold;">РўРёРї РґРѕРіРѕРІРѕСЂР°:</div>
+      <div style="margin-bottom:6px; font-weight:bold;">Тип договора:</div>
       <select id="treatyTypeSelect" style="width:100%; font-family:Verdana; font-size:10px; padding:3px; margin-bottom:8px;">
-        <option value="trade">РўРѕСЂРіРѕРІРѕРµ СЃРѕРіР»Р°С€РµРЅРёРµ</option>
-        <option value="non_aggression">РџР°РєС‚ Рѕ РЅРµРЅР°РїР°РґРµРЅРёРё</option>
-        <option value="alliance">Р’РѕРµРЅРЅС‹Р№ СЃРѕСЋР·</option>
-        <option value="cultural_exchange">РљСѓР»СЊС‚СѓСЂРЅС‹Р№ РѕР±РјРµРЅ</option>
+        <option value="trade">Торговое соглашение</option>
+        <option value="non_aggression">Пакт о ненападении</option>
+        <option value="alliance">Военный союз</option>
+        <option value="cultural_exchange">Культурный обмен</option>
       </select>
       
       <div style="text-align:right;">
-        <button onclick="closeCreateTreatyModal()" class="btn small" style="display:inline-block; width:auto;">РћРўРњР•РќРђ</button>
-        <button onclick="createTreatyFromModal()" class="btn small" style="display:inline-block; width:auto;">РџР Р•Р”Р›РћР–РРўР¬</button>
+        <button onclick="closeCreateTreatyModal()" class="btn small" style="display:inline-block; width:auto;">ОТМЕНА</button>
+        <button onclick="createTreatyFromModal()" class="btn small" style="display:inline-block; width:auto;">ПРЕДЛОЖИТЬ</button>
       </div>
     </div>
   </div>
@@ -570,7 +570,7 @@ td.footer a { color: #fef08a; }
 <div id="newsModal" class="retro-modal">
   <div class="retro-modal-box" style="width:500px;">
     <div class="retro-modal-title">
-      <span>РњРР РћР’Р«Р• РќРћР’РћРЎРўР</span>
+      <span>МИРОВЫЕ НОВОСТИ</span>
       <span style="cursor:pointer;" onclick="closeNewsModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:400px; overflow-y:auto;">
@@ -583,7 +583,7 @@ td.footer a { color: #fef08a; }
 <div id="countryInfoModal" class="retro-modal">
   <div class="retro-modal-box" style="width:450px;">
     <div class="retro-modal-title">
-      <span>РЎРўРђРўРРЎРўРРљРђ РЎРўР РђРќ</span>
+      <span>СТАТИСТИКА СТРАН</span>
       <span style="cursor:pointer;" onclick="closeCountryInfoModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:400px; overflow-y:auto;">
@@ -596,13 +596,13 @@ td.footer a { color: #fef08a; }
 <div id="economyModal" class="retro-modal">
   <div class="retro-modal-box" style="width:500px;">
     <div class="retro-modal-title">
-      <span>Р­РљРћРќРћРњРР§Р•РЎРљРћР• РЈРџР РђР’Р›Р•РќРР•</span>
+      <span>ЭКОНОМИЧЕСКОЕ УПРАВЛЕНИЕ</span>
       <span style="cursor:pointer;" onclick="closeEconomyModal()">[X]</span>
     </div>
     <div class="retro-modal-body">
       <div id="economyContent"></div>
       <div style="margin-top:8px; border-top:1px solid #94a3b8; padding-top:8px;">
-        <div style="margin-bottom:4px; font-weight:bold;">РР·РјРµРЅРёС‚СЊ РЅР°Р»РѕРіРѕРІСѓСЋ СЃС‚Р°РІРєСѓ:</div>
+        <div style="margin-bottom:4px; font-weight:bold;">Изменить налоговую ставку:</div>
         <div style="display:flex; gap:4px; align-items:center;">
           <input type="range" id="taxRateSlider" min="5" max="50" value="20" oninput="updateTaxRate(this.value)" style="flex:1;">
           <span id="taxRateValue" style="font-weight:bold; width:40px;">20%</span>
@@ -616,20 +616,20 @@ td.footer a { color: #fef08a; }
 <div id="armyModal" class="retro-modal">
   <div class="retro-modal-box" style="width:520px;">
     <div class="retro-modal-title">
-      <span>РђР РњРРЇ</span>
+      <span>АРМИЯ</span>
       <span style="cursor:pointer;" onclick="closeArmyModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:450px; overflow-y:auto;">
       <div id="armyStatsContent" style="margin-bottom:8px; border-bottom:1px solid #94a3b8; padding-bottom:8px;"></div>
       <div style="text-align:center; margin-bottom:8px;">
-        <button onclick="trainDivision()" class="btn small green" style="width:auto;">РћР‘РЈР§РРўР¬ Р”РР’РР—РР®</button>
+        <button onclick="trainDivision()" class="btn small green" style="width:auto;">ОБУЧИТЬ ДИВИЗИЮ</button>
       </div>
-      <div style="font-weight:bold; margin-bottom:4px;">Р”РёРІРёР·РёРё:</div>
+      <div style="font-weight:bold; margin-bottom:4px;">Дивизии:</div>
       <div id="armyDivisionsContent" style="margin-bottom:8px; border-bottom:1px solid #94a3b8; padding-bottom:8px;"></div>
-      <div style="font-weight:bold; margin-bottom:4px;">РђРєС‚РёРІРЅС‹Рµ РІРѕР№РЅС‹:</div>
+      <div style="font-weight:bold; margin-bottom:4px;">Активные войны:</div>
       <div id="armyActiveWarsContent" style="margin-bottom:8px; border-bottom:1px solid #94a3b8; padding-bottom:8px;"></div>
-      <div style="font-weight:bold; margin-bottom:4px;">РћР±СЉСЏРІРёС‚СЊ РІРѕР№РЅСѓ:</div>
-      <input type="text" id="armyWarTargetSearch" placeholder="РџРѕРёСЃРє СЃС‚СЂР°РЅС‹..." oninput="renderArmyContent()" style="width:100%; font-family:Verdana; font-size:10px; padding:3px; margin-bottom:4px;">
+      <div style="font-weight:bold; margin-bottom:4px;">Объявить войну:</div>
+      <input type="text" id="armyWarTargetSearch" placeholder="Поиск страны..." oninput="renderArmyContent()" style="width:100%; font-family:Verdana; font-size:10px; padding:3px; margin-bottom:4px;">
       <div id="armyWarTargetsContent" style="max-height:140px; overflow-y:auto;"></div>
     </div>
   </div>
@@ -639,16 +639,16 @@ td.footer a { color: #fef08a; }
 <div id="constructionModal" class="retro-modal">
   <div class="retro-modal-box" style="width:520px;">
     <div class="retro-modal-title">
-      <span>РЎРўР РћРРўР•Р›Р¬РЎРўР’Рћ</span>
+      <span>СТРОИТЕЛЬСТВО</span>
       <span style="cursor:pointer;" onclick="closeConstructionModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:450px; overflow-y:auto;">
-      <div style="font-size:9px; color:#64748b; margin-bottom:6px;">Р’С‹Р±РµСЂРёС‚Рµ С‚РёРї РѕР±СЉРµРєС‚Р°, Р·Р°С‚РµРј РєР»РёРєРЅРёС‚Рµ РїРѕ СЃРІРѕРµР№ С‚РµСЂСЂРёС‚РѕСЂРёРё РЅР° РєР°СЂС‚Рµ. Р§РµРј РїР»РѕС‚РЅРµРµ Р·Р°СЃС‚СЂРѕР№РєР° РѕРґРЅРѕРіРѕ С‚РёРїР° СЂСЏРґРѕРј, С‚РµРј РґРѕСЂРѕР¶Рµ СЃС‚СЂРѕРёС‚СЊ РµС‰С‘ РѕРґРёРЅ вЂ” Р° РїРѕСЃР»Рµ РѕРїСЂРµРґРµР»С‘РЅРЅРѕР№ РїР»РѕС‚РЅРѕСЃС‚Рё СЃС‚СЂРѕРёС‚СЊ С‚Р°Рј СѓР¶Рµ С„РёР·РёС‡РµСЃРєРё РЅРµР»СЊР·СЏ, РЅСѓР¶РЅРѕ РІС‹Р±СЂР°С‚СЊ РјРµСЃС‚Рѕ РїРѕРґР°Р»СЊС€Рµ.</div>
-      <div style="font-weight:bold; margin-bottom:4px;">Р”РѕСЃС‚СѓРїРЅС‹Рµ РѕР±СЉРµРєС‚С‹ (РЅР° РєР°СЂС‚Рµ):</div>
+      <div style="font-size:9px; color:#64748b; margin-bottom:6px;">Выберите тип объекта, затем кликните по своей территории на карте. Чем плотнее застройка одного типа рядом, тем дороже строить ещё один — а после определённой плотности строить там уже физически нельзя, нужно выбрать место подальше.</div>
+      <div style="font-weight:bold; margin-bottom:4px;">Доступные объекты (на карте):</div>
       <div id="constructionTypesContent" style="margin-bottom:8px; border-bottom:1px solid #94a3b8; padding-bottom:8px;"></div>
-      <div style="font-weight:bold; margin-bottom:4px;">Р’Р°С€Рё РїРѕСЃС‚СЂРѕР№РєРё:</div>
+      <div style="font-weight:bold; margin-bottom:4px;">Ваши постройки:</div>
       <div id="constructionOwnedContent" style="margin-bottom:8px; border-bottom:1px solid #94a3b8; padding-bottom:8px;"></div>
-      <div style="font-size:9px; color:#64748b; margin-bottom:6px;">Р—Р°РІРѕРґС‹ Рё Р¶РёР»С‹Рµ СЂР°Р№РѕРЅС‹ РЅРµ РїСЂРёРІСЏР·Р°РЅС‹ Рє РјРµСЃС‚Сѓ РЅР° РєР°СЂС‚Рµ - СЌС‚Рѕ РїСЂРѕСЃС‚Рѕ С†РёС„СЂС‹-Р±Р°С„С‹. РџСЂРё Р·Р°С…РІР°С‚Рµ С‡СѓР¶РѕР№ С‚РµСЂСЂРёС‚РѕСЂРёРё С‡Р°СЃС‚СЊ С‚Р°РєРёС… РїРѕСЃС‚СЂРѕРµРє РјРѕР¶РµС‚ РїРµСЂРµР№С‚Рё Рє РІР°Рј.</div>
+      <div style="font-size:9px; color:#64748b; margin-bottom:6px;">Заводы и жилые районы не привязаны к месту на карте - это просто цифры-бафы. При захвате чужой территории часть таких построек может перейти к вам.</div>
       <div id="abstractBuildingsContent"></div>
     </div>
   </div>
@@ -658,34 +658,34 @@ td.footer a { color: #fef08a; }
 <div id="investmentModal" class="retro-modal">
   <div class="retro-modal-box" style="width:450px;">
     <div class="retro-modal-title">
-      <span>РРќР’Р•РЎРўРР¦РРћРќРќР«Р• РџР РћР•РљРўР«</span>
+      <span>ИНВЕСТИЦИОННЫЕ ПРОЕКТЫ</span>
       <span style="cursor:pointer;" onclick="closeInvestmentModal()">[X]</span>
     </div>
     <div class="retro-modal-body">
       <div style="margin-bottom:8px;">
-        <div style="margin-bottom:4px; font-weight:bold;">РќРѕРІР°СЏ РёРЅРІРµСЃС‚РёС†РёСЏ:</div>
+        <div style="margin-bottom:4px; font-weight:bold;">Новая инвестиция:</div>
         <div style="margin-bottom:4px;">
-          <label>РЎСѓРјРјР° ($M):</label>
+          <label>Сумма ($M):</label>
           <input type="number" id="investmentAmount" value="1" min="0.1" step="0.1" style="width:80px; font-family:Verdana; font-size:10px; padding:3px;">
         </div>
         <div style="margin-bottom:4px;">
-          <label>РќР°РїСЂР°РІР»РµРЅРёРµ:</label>
+          <label>Направление:</label>
           <select id="investmentType" style="font-family:Verdana; font-size:10px; padding:3px;">
-            <option value="bonds">Р“РѕСЃРѕР±Р»РёРіР°С†РёРё (РЅРёР·РєРёР№ СЂРёСЃРє, +4-8%, 6-12 РґРЅ.)</option>
-            <option value="infra">РРЅС„СЂР°СЃС‚СЂСѓРєС‚СѓСЂР° (СЃСЂРµРґРЅРёР№ СЂРёСЃРє, +10-18%, 12-22 РґРЅ.)</option>
-            <option value="tech">РўРµС…РЅРѕР»РѕРіРёРё (РІС‹СЃРѕРєРёР№ СЂРёСЃРє, +18-40%, 18-32 РґРЅ.)</option>
-            <option value="startup">РЎС‚Р°СЂС‚Р°РїС‹ (РѕС‡РµРЅСЊ РІС‹СЃРѕРєРёР№ СЂРёСЃРє, +10-70%, 8-26 РґРЅ.)</option>
+            <option value="bonds">Гособлигации (низкий риск, +4-8%, 6-12 дн.)</option>
+            <option value="infra">Инфраструктура (средний риск, +10-18%, 12-22 дн.)</option>
+            <option value="tech">Технологии (высокий риск, +18-40%, 18-32 дн.)</option>
+            <option value="startup">Стартапы (очень высокий риск, +10-70%, 8-26 дн.)</option>
           </select>
         </div>
-        <div style="font-size:8px; color:#64748b; margin-bottom:4px;">Р”РµРЅСЊРіРё РІРєР»Р°РґС‹РІР°СЋС‚СЃСЏ СЃРµР№С‡Р°СЃ Рё РІРѕР·РІСЂР°С‰Р°СЋС‚СЃСЏ СЃ РїСЂРёР±С‹Р»СЊСЋ С‡РµСЂРµР· СѓРєР°Р·Р°РЅРЅС‹Р№ СЃСЂРѕРє. Р•СЃС‚СЊ С€Р°РЅСЃ, С‡С‚Рѕ РІР»РѕР¶РµРЅРёРµ С‡Р°СЃС‚РёС‡РЅРѕ РїСЂРѕРІР°Р»РёС‚СЃСЏ.</div>
-        <button onclick="makeInvestment()" class="btn small" style="width:auto;">РРќР’Р•РЎРўРР РћР’РђРўР¬</button>
+        <div style="font-size:8px; color:#64748b; margin-bottom:4px;">Деньги вкладываются сейчас и возвращаются с прибылью через указанный срок. Есть шанс, что вложение частично провалится.</div>
+        <button onclick="makeInvestment()" class="btn small" style="width:auto;">ИНВЕСТИРОВАТЬ</button>
       </div>
       <div style="border-top:1px solid #94a3b8; padding-top:8px; margin-bottom:8px;">
-        <div style="font-weight:bold; margin-bottom:4px;">Р“СЂР°С„РёРє РІР»РѕР¶РµРЅРёР№:</div>
+        <div style="font-weight:bold; margin-bottom:4px;">График вложений:</div>
         <canvas id="investmentChart" width="400" height="110" style="background:#ffffff; border:1px solid #94a3b8; width:100%; max-width:400px;"></canvas>
       </div>
       <div style="border-top:1px solid #94a3b8; padding-top:8px;">
-        <div style="font-weight:bold; margin-bottom:4px;">Р’Р°С€Рё РёРЅРІРµСЃС‚РёС†РёРё:</div>
+        <div style="font-weight:bold; margin-bottom:4px;">Ваши инвестиции:</div>
         <div id="investmentProjectsContent" style="max-height:200px; overflow-y:auto;"></div>
       </div>
     </div>
@@ -696,32 +696,32 @@ td.footer a { color: #fef08a; }
 <div id="creditModal" class="retro-modal">
   <div class="retro-modal-box" style="width:500px;">
     <div class="retro-modal-title">
-      <span>РљР Р•Р”РРўРќРђРЇ РЎРРЎРўР•РњРђ</span>
+      <span>КРЕДИТНАЯ СИСТЕМА</span>
       <span style="cursor:pointer;" onclick="closeCreditModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:400px; overflow-y:auto;">
       <div style="margin-bottom:8px; border-bottom:1px solid #94a3b8; padding-bottom:8px;">
-        <div style="font-weight:bold; margin-bottom:4px;">Р—Р°РїСЂРѕСЃРёС‚СЊ РєСЂРµРґРёС‚:</div>
+        <div style="font-weight:bold; margin-bottom:4px;">Запросить кредит:</div>
         <div style="margin-bottom:4px;">
-          <label>РћС‚ СЃС‚СЂР°РЅС‹:</label>
+          <label>От страны:</label>
           <select id="creditLenderSelect" style="font-family:Verdana; font-size:10px; padding:3px;"></select>
         </div>
         <div style="margin-bottom:4px;">
-          <label>РЎСѓРјРјР° ($M):</label>
+          <label>Сумма ($M):</label>
           <input type="number" id="creditAmount" value="5" min="0.1" step="0.1" style="width:80px; font-family:Verdana; font-size:10px; padding:3px;">
         </div>
         <div style="margin-bottom:4px;">
-          <label>РџСЂРѕС†РµРЅС‚ (%):</label>
+          <label>Процент (%):</label>
           <input type="number" id="creditInterest" value="5" min="1" max="20" step="0.5" style="width:60px; font-family:Verdana; font-size:10px; padding:3px;">
         </div>
         <div style="margin-bottom:4px;">
-          <label>РЎСЂРѕРє (РґРЅРµР№):</label>
+          <label>Срок (дней):</label>
           <input type="number" id="creditDuration" value="365" min="30" max="1825" step="30" style="width:80px; font-family:Verdana; font-size:10px; padding:3px;">
         </div>
-        <button onclick="requestCreditFromModal()" class="btn small" style="width:auto;">Р—РђРџР РћРЎРРўР¬ РљР Р•Р”РРў</button>
+        <button onclick="requestCreditFromModal()" class="btn small" style="width:auto;">ЗАПРОСИТЬ КРЕДИТ</button>
       </div>
       <div>
-        <div style="font-weight:bold; margin-bottom:4px;">РђРєС‚РёРІРЅС‹Рµ РєСЂРµРґРёС‚С‹:</div>
+        <div style="font-weight:bold; margin-bottom:4px;">Активные кредиты:</div>
         <div id="creditsContent"></div>
       </div>
     </div>
@@ -732,29 +732,29 @@ td.footer a { color: #fef08a; }
 <div id="customTreatyModal" class="retro-modal">
   <div class="retro-modal-box" style="width:550px;">
     <div class="retro-modal-title">
-      <span>РЎРћР—Р”РђРќРР• РљРђРЎРўРћРњРќРћР“Рћ Р”РћР“РћР’РћР Рђ</span>
+      <span>СОЗДАНИЕ КАСТОМНОГО ДОГОВОРА</span>
       <span style="cursor:pointer;" onclick="closeCustomTreatyModal()">[X]</span>
     </div>
     <div class="retro-modal-body">
       <div style="margin-bottom:6px;">
-        <label style="font-weight:bold;">РќР°Р·РІР°РЅРёРµ РґРѕРіРѕРІРѕСЂР°:</label>
-        <input type="text" id="customTreatyName" placeholder="Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ..." style="width:100%; font-family:Verdana; font-size:10px; padding:4px; margin-top:2px;">
+        <label style="font-weight:bold;">Название договора:</label>
+        <input type="text" id="customTreatyName" placeholder="Введите название..." style="width:100%; font-family:Verdana; font-size:10px; padding:4px; margin-top:2px;">
       </div>
       <div style="margin-bottom:6px;">
-        <label style="font-weight:bold;">РЎРѕРґРµСЂР¶Р°РЅРёРµ РґРѕРіРѕРІРѕСЂР°:</label>
-        <textarea id="customTreatyContent" placeholder="РћРїРёС€РёС‚Рµ СѓСЃР»РѕРІРёСЏ Рё РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІР°..." style="width:100%; font-family:Verdana; font-size:10px; padding:4px; margin-top:2px; resize:vertical; min-height:80px;"></textarea>
+        <label style="font-weight:bold;">Содержание договора:</label>
+        <textarea id="customTreatyContent" placeholder="Опишите условия и обязательства..." style="width:100%; font-family:Verdana; font-size:10px; padding:4px; margin-top:2px; resize:vertical; min-height:80px;"></textarea>
       </div>
       <div style="margin-bottom:6px;">
-        <label style="font-weight:bold;">РЎС‚РѕСЂРѕРЅС‹ РґРѕРіРѕРІРѕСЂР°:</label>
+        <label style="font-weight:bold;">Стороны договора:</label>
         <div id="treatyPartiesSelect" style="max-height:100px; overflow-y:auto; border:1px inset #94a3b8; padding:4px; margin-top:2px;"></div>
       </div>
       <div style="margin-bottom:6px;">
-        <label style="font-weight:bold;">Р“Р°СЂР°РЅС‚С‹ РІС‹РїРѕР»РЅРµРЅРёСЏ:</label>
+        <label style="font-weight:bold;">Гаранты выполнения:</label>
         <div id="treatyGuarantorsSelect" style="max-height:100px; overflow-y:auto; border:1px inset #94a3b8; padding:4px; margin-top:2px;"></div>
       </div>
       <div style="text-align:right;">
-        <button onclick="closeCustomTreatyModal()" class="btn small" style="display:inline-block; width:auto;">РћРўРњР•РќРђ</button>
-        <button onclick="submitCustomTreaty()" class="btn small" style="display:inline-block; width:auto;">РЎРћР—Р”РђРўР¬ Р”РћР“РћР’РћР </button>
+        <button onclick="closeCustomTreatyModal()" class="btn small" style="display:inline-block; width:auto;">ОТМЕНА</button>
+        <button onclick="submitCustomTreaty()" class="btn small" style="display:inline-block; width:auto;">СОЗДАТЬ ДОГОВОР</button>
       </div>
     </div>
   </div>
@@ -764,7 +764,7 @@ td.footer a { color: #fef08a; }
 <div id="notificationsModal" class="retro-modal">
   <div class="retro-modal-box" style="width:500px;">
     <div class="retro-modal-title">
-      <span>РЈР’Р•Р”РћРњР›Р•РќРРЇ</span>
+      <span>УВЕДОМЛЕНИЯ</span>
       <span style="cursor:pointer;" onclick="closeNotificationsModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:400px; overflow-y:auto;">
@@ -775,17 +775,17 @@ td.footer a { color: #fef08a; }
 
 <!-- CUSTOM RETRO MESSAGE BOX -->
 <div id="toasts" class="toasts"></div><div id="mapTip" style="display:none;position:fixed;z-index:250;background:#0f172a;color:#fff;padding:5px 8px;font-size:11px;border:1px solid #38bdf8;max-width:260px;pointer-events:none"></div>
-<div id="gameOver"><div style="font-size:30px;font-weight:bold">Р“РћРЎРЈР”РђР РЎРўР’Рћ РџРђР›Рћ</div><div id="gameOverText" style="margin:10px"></div><button class="btn" style="width:200px" onclick="location.reload()">РќРћР’РђРЇ РР“Р Рђ</button></div>
-<div id="dealModal" class="retro-modal"><div class="retro-modal-box" style="width:540px"><div class="retro-modal-title"><span>Р”РћР“РћР’РћР </span><span style="cursor:pointer" onclick="A.dealClose()">[X]</span></div><div class="retro-modal-body" id="dealBody"></div></div></div>
-<div id="hubModal" class="retro-modal"><div class="retro-modal-box"><div class="retro-modal-title"><span>РЁРўРђР‘ Р“РћРЎРЈР”РђР РЎРўР’Рђ</span><span style="cursor:pointer" onclick="A.hubClose()">[X]</span></div><div id="hubTabs" class="tabs"></div><div class="retro-modal-body" id="hubBody"></div></div></div>
+<div id="gameOver"><div style="font-size:30px;font-weight:bold">ГОСУДАРСТВО ПАЛО</div><div id="gameOverText" style="margin:10px"></div><button class="btn" style="width:200px" onclick="location.reload()">НОВАЯ ИГРА</button></div>
+<div id="dealModal" class="retro-modal"><div class="retro-modal-box" style="width:540px"><div class="retro-modal-title"><span>ДОГОВОР</span><span style="cursor:pointer" onclick="A.dealClose()">[X]</span></div><div class="retro-modal-body" id="dealBody"></div></div></div>
+<div id="hubModal" class="retro-modal"><div class="retro-modal-box"><div class="retro-modal-title"><span>ШТАБ ГОСУДАРСТВА</span><span style="cursor:pointer" onclick="A.hubClose()">[X]</span></div><div id="hubTabs" class="tabs"></div><div class="retro-modal-body" id="hubBody"></div></div></div>
 <div id="retroAlertModal" class="retro-modal">
   <div class="retro-modal-box" style="width:300px;">
     <div class="retro-modal-title">
-      <span id="alertTitle">РЎРћРћР‘Р©Р•РќРР• РЎРРЎРўР•РњР«</span>
+      <span id="alertTitle">СООБЩЕНИЕ СИСТЕМЫ</span>
       <span style="cursor:pointer;" onclick="closeAlertBox()">[X]</span>
     </div>
     <div class="retro-modal-body">
-      <div id="alertMessage" style="margin-bottom:12px;">РўРµРєСЃС‚ СЃРѕРѕР±С‰РµРЅРёСЏ...</div>
+      <div id="alertMessage" style="margin-bottom:12px;">Текст сообщения...</div>
       <div style="text-align:center;">
         <button onclick="closeAlertBox()" class="btn small" style="display:inline-block; width:80px; font-weight:bold;">OK</button>
       </div>
@@ -797,7 +797,7 @@ td.footer a { color: #fef08a; }
 <div id="surrenderModal" class="retro-modal">
   <div class="retro-modal-box" style="width:600px;">
     <div class="retro-modal-title">
-      <span>РљРђРџРРўРЈР›РЇР¦РРЇ - РљРћРќРЎРўР РЈРљРўРћР  РњРР РќРћР“Рћ Р”РћР“РћР’РћР Рђ</span>
+      <span>КАПИТУЛЯЦИЯ - КОНСТРУКТОР МИРНОГО ДОГОВОРА</span>
       <span style="cursor:pointer;" onclick="closeSurrenderModal()">[X]</span>
     </div>
     <div class="retro-modal-body" style="max-height:500px; overflow-y:auto;">
