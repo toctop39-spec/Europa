@@ -62,7 +62,7 @@ function breakPacts(a, b) {
   if (n) { let c = countryMap[a]; if (c) { c.influence = Math.max(0, c.influence - 10); if (c.gov) c.gov.approval -= 3; } addNewsEvent(`${countryMap[a].name} нарушает договор с ${countryMap[b].name}`, 'diplomacy'); }
 }
 function joinWar(o, enemy) {
-  if (atWarWith(o, enemy) || (truces[o + enemy] || 0) > currentTurn || activeWars.length >= 9) return false;
+  if (atWarWith(o, enemy) || (truces[o + enemy] || 0) > currentTurn || activeWars.length >= 9 || !(isHuman(o) || isHuman(enemy))) return false;   // ИИ с ИИ не воюют
   [[o, enemy], [enemy, o]].forEach(([x, y]) => { if (diplomaticRelations[x] && diplomaticRelations[x][y]) diplomaticRelations[x][y].status = 'at_war'; });
   startWar(o, enemy); mapDirty = true; addNewsEvent(`${countryMap[o].name} вступает в войну против ${countryMap[enemy].name}!`, 'war');
   if (o === LOCAL || enemy === LOCAL) toast(`⚔ ${countryMap[o].name} вступает в войну против ${countryMap[enemy].name}`, 'war'); return true;
