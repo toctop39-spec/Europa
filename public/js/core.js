@@ -187,20 +187,21 @@ window.hasNearbyBuilding = function (type, ownerId, x, y, radius) {
   return buildings.some(b => b.type === type && b.ownerId === ownerId && b.status === 'active' && Math.hypot(b.x - x, b.y - y) < radius && territoryOwner[Math.round(b.y) * OFF_W + Math.round(b.x)] === c.numericId);
 };
 const _bS = new Int32Array(OFF_W * OFF_H), _bP = new Int32Array(OFF_W * OFF_H), _bQ = new Int32Array(OFF_W * OFF_H); let _bId = 0;
+let _pass = null;
 function ownPath(x0, y0, x1, y1, num) {
-  const T = territoryOwner, N = OFF_W * OFF_H, s = y0 * OFF_W + x0, t = y1 * OFF_W + x1; if (T[s] !== num || T[t] !== num) return null;
+  const T = territoryOwner, N = OFF_W * OFF_H, s = y0 * OFF_W + x0, t = y1 * OFF_W + x1; if (T[s] !== num || !(T[t] === num || (_pass && _pass.has(T[t])))) return null;
   _bId++; let h = 0, tl = 0, ok = false; _bQ[tl++] = s; _bS[s] = _bId; _bP[s] = -1;
   while (h < tl) { let k = _bQ[h++]; if (k === t) { ok = true; break; } let x = k % OFF_W, nb;
-    if (x > 0) { nb = k - 1; if (_bS[nb] !== _bId && T[nb] === num) { _bS[nb] = _bId; _bP[nb] = k; _bQ[tl++] = nb; } }
-    if (x < OFF_W - 1) { nb = k + 1; if (_bS[nb] !== _bId && T[nb] === num) { _bS[nb] = _bId; _bP[nb] = k; _bQ[tl++] = nb; } }
-    if (k >= OFF_W) { nb = k - OFF_W; if (_bS[nb] !== _bId && T[nb] === num) { _bS[nb] = _bId; _bP[nb] = k; _bQ[tl++] = nb; } }
-    if (k < N - OFF_W) { nb = k + OFF_W; if (_bS[nb] !== _bId && T[nb] === num) { _bS[nb] = _bId; _bP[nb] = k; _bQ[tl++] = nb; } } }
+    if (x > 0) { nb = k - 1; if (_bS[nb] !== _bId && (T[nb] === num || (_pass && _pass.has(T[nb])))) { _bS[nb] = _bId; _bP[nb] = k; _bQ[tl++] = nb; } }
+    if (x < OFF_W - 1) { nb = k + 1; if (_bS[nb] !== _bId && (T[nb] === num || (_pass && _pass.has(T[nb])))) { _bS[nb] = _bId; _bP[nb] = k; _bQ[tl++] = nb; } }
+    if (k >= OFF_W) { nb = k - OFF_W; if (_bS[nb] !== _bId && (T[nb] === num || (_pass && _pass.has(T[nb])))) { _bS[nb] = _bId; _bP[nb] = k; _bQ[tl++] = nb; } }
+    if (k < N - OFF_W) { nb = k + OFF_W; if (_bS[nb] !== _bId && (T[nb] === num || (_pass && _pass.has(T[nb])))) { _bS[nb] = _bId; _bP[nb] = k; _bQ[tl++] = nb; } } }
   if (!ok) return null; let p = []; for (let k = t; k !== -1; k = _bP[k]) p.push([k % OFF_W, (k / OFF_W) | 0]); return p.reverse();
 }
 function convoySpeed(cid) { let c = countryMap[cid]; let sp = 12; if (c && c.mil && isHuman(cid)) sp += bcount(c, 'railway') * 0.7 + techFx(c, 'ind') * 20; return sp; }
 window.spawnConvoy = function (cid, tx, ty, power, side, warId, divId) {
   let hp = getHubPosition(cid, tx, ty); if (!hp) return false;
-  let path = ownPath(hp.x, hp.y, Math.round(tx), Math.round(ty), countryMap[cid].numericId); if (!path || path.length < 2) return false;
+  _pass = passSet(cid); let path = ownPath(hp.x, hp.y, Math.round(tx), Math.round(ty), countryMap[cid].numericId); _pass = null; if (!path || path.length < 2) return false;
   convoys.push({ id: convoyIdCounter++, ownerId: cid, warId, path, pathIndex: 0, prev: 0, power, divId: divId || 0, color: side === 'a' ? '#38bdf8' : '#f87171', speed: convoySpeed(cid) });
   return true;
 };
@@ -260,11 +261,11 @@ window.skipDays = window.advanceTurn;
 // ---------- РИСОВАНИЕ ----------
 const easeT = () => { let t = dayProgress; return t * t * (3 - 2 * t); };
 function drawUnits() {
-  const t = easeT(), now = performance.now(), w = Math.max(0.9, 4.2 / scale), h = w * 0.68;
+  const t = easeT(), ut = clamp((performance.now() - unitStart) / (DAY_MS / WAR_SUB * 1.1), 0, 1), now = performance.now(), w = Math.max(0.9, 4.2 / scale), h = w * 0.68;
   ctx.lineWidth = 0.12; ctx.strokeStyle = 'rgba(0,0,0,.65)';
   for (const u of units) {
     let a = u.dead ? 1 - t : (u.born === dayCounter ? t : 1);
-    let x = u.px + (u.x - u.px) * t + Math.sin(now / 700 + u.id) * 0.12, y = u.py + (u.y - u.py) * t + Math.cos(now / 800 + u.id) * 0.12;
+    let x = u.px + (u.x - u.px) * ut + Math.sin(now / 700 + u.id) * 0.12, y = u.py + (u.y - u.py) * ut + Math.cos(now / 800 + u.id) * 0.12;
     ctx.globalAlpha = a; ctx.drawImage(getFlagCanvas(u.owner), x - w / 2, y - h / 2, w, h);
     if (scale >= 4) ctx.strokeRect(x - w / 2, y - h / 2, w, h);
   }
@@ -302,6 +303,7 @@ window.draw = function () {
   { ctx.font = `${12 / scale}px sans-serif`; let hl = typeof currentTool === 'string' && currentTool.indexOf('build_') === 0 ? currentTool.slice(6) : '';
     deposits.forEach(d => { let taken = buildings.some(b => b.x === d.x && b.y === d.y); ctx.globalAlpha = taken ? 0.35 : 0.95; ctx.fillText(DEP[d.k][0], d.x, d.y);
       if (hl === DEP[d.k][2] && !taken) { ctx.globalAlpha = 1; ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2 / scale; ctx.beginPath(); ctx.arc(d.x, d.y, 9 / scale, 0, 7); ctx.stroke(); } }); ctx.globalAlpha = 1; }
+  activeWars.forEach(w => { let l = w.tg && w.tg[LOCAL]; if (l) l.forEach(p => { ctx.globalAlpha = 1; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2 / scale; ctx.beginPath(); ctx.arc(p.x, p.y, 10 / scale, 0, 7); ctx.stroke(); ctx.font = `${16 / scale}px sans-serif`; ctx.fillText('🎯', p.x, p.y); }); });
   if (typeof projects !== 'undefined') projects.forEach(p => {
     if (!p.site) return; 
     { let r = 7 / scale; ctx.font = `${r * 1.35}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = 0.6 + 0.4 * Math.sin(performance.now() / 250); ctx.fillStyle = '#fff'; ctx.fillText('🚧', p.site.x, p.site.y); ctx.globalAlpha = 1; }
@@ -318,7 +320,9 @@ window.draw = function () {
 };
 
 // ---------- ЮНИТЫ-ФЛАЖКИ НА ФРОНТЕ ----------
+let unitStart = 0;
 function refreshUnits() {
+  unitStart = performance.now();
   units = units.filter(u => !u.dead || u.dead >= dayCounter);
   let alive = new Set(activeWars.map(w => w.id));
   units.forEach(u => { if (!u.dead && !alive.has(u.war)) u.dead = dayCounter; });
