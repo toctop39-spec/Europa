@@ -27,10 +27,22 @@ const TECH = [
   ['arm1', 'Лёгкие танки', 14, 4, null, { att: .06 }], ['arm2', 'Средние танки', 20, 6, 'arm1', { att: .09 }],
   ['eng1', 'Фортификация', 12, 3, null, { def: .08 }], ['eng2', 'Глубокоэшелонированная оборона', 18, 5, 'eng1', { def: .1 }],
   ['log1', 'Мотострелковые перевозки', 12, 3, null, { att: .03, def: .03, ind: .03 }], ['ind1', 'Конвейерное производство', 14, 4, null, { ind: .1 }], ['ind2', 'Станкостроение', 20, 6, 'ind1', { ind: .12 }],
-  ['sci1', 'Научные школы', 12, 3, null, { sci: .15 }], ['eco1', 'Финансовая реформа', 14, 4, null, { gr: .5 }], ['eco2', 'Индустриализация', 20, 6, 'eco1', { gr: .8 }]
+  ['sci1', 'Научные школы', 12, 3, null, { sci: .15 }], ['eco1', 'Финансовая реформа', 14, 4, null, { gr: .5 }], ['eco2', 'Индустриализация', 20, 6, 'eco1', { gr: .8 }],
+  ['agr1', 'Севооборот и удобрения', 12, 3, null, { food: .2 }], ['agr2', 'Механизация сельского хозяйства', 18, 5, 'agr1', { food: .3 }],
+  ['min1', 'Глубокие шахты', 12, 3, null, { steel: .25 }], ['min2', 'Горнорудная техника', 18, 5, 'min1', { steel: .35 }],
+  ['oil1', 'Нефтеразведка', 12, 3, null, { oil: .25 }], ['oil2', 'Бурение на шельфе', 18, 5, 'oil1', { oil: .35 }],
+  ['trn1', 'Учебные центры', 12, 3, null, { trn: .3 }], ['trn2', 'Военные академии', 18, 5, 'trn1', { trn: .3, def: .03 }]
 ];
+// месторождения: редкие места на карте, где можно строить добычу (одинаковы у всех клиентов — свой генератор, не RNG мира)
+const DEP = { food: ['🌾', 'Плодородная земля', 'farm'], steel: ['⛏', 'Рудное месторождение', 'mine'], oil: ['🛢', 'Нефтяное месторождение', 'oilrig'] };
+let deposits = [];
+function genDeposits() {
+  deposits = []; let s = 987654321; const R = () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  Object.keys(DEP).forEach(k => { let n = 0, g = 0; while (n < 30 && g++ < 30000) { let x = Math.floor(R() * OFF_W), y = Math.floor(R() * OFF_H); if (!territoryOwner[y * OFF_W + x]) continue; if (deposits.some(d => Math.abs(d.x - x) < 30 && Math.abs(d.y - y) < 30)) continue; deposits.push({ x, y, k }); n++; } });
+}
 const BAT = { inf: ['Пехота', 6, 8, 1000, 0.25, 'rifles', 8], art: ['Артиллерия', 12, 4, 600, 0.45, 'guns', 6], tank: ['Танки', 16, 8, 600, 0.8, 'tanks', 5], rec: ['Разведка', 2, 2, 200, 0.15, 'rifles', 2], eng: ['Инженеры', 2, 6, 500, 0.2, 'rifles', 4] };
 const BT = {
+  farm: { n: 'Агрокомплекс', cost: 5, steel: 30, d: [2, 3, 6], map: 1, dep: 'food', eff: '+6 еды/день, только на 🌾 плодородной земле' }, mine: { n: 'Рудник', cost: 6, steel: 40, d: [2, 3, 7], map: 1, dep: 'steel', eff: '+5 стали/день, только на ⛏ рудном месторождении' }, oilrig: { n: 'Нефтяная вышка', cost: 7, steel: 50, d: [2, 3, 8], map: 1, dep: 'oil', eff: '+5 нефти/день, только на 🛢 нефтяном месторождении' },
   factory: { n: 'Завод', cost: 6, steel: 60, d: [3, 4, 10], eff: 'Больше производства (гражд./воен.)' }, housing: { n: 'Жилой район', cost: 3, steel: 30, d: [2, 3, 6], eff: 'Прирост людей +' },
   power: { n: 'Электростанция', cost: 8, steel: 80, d: [3, 4, 12], eff: 'Заводы +8% выпуска' }, steelmill: { n: 'Сталелитейный комбинат', cost: 8, steel: 40, d: [3, 4, 10], eff: 'Сталь +3/день' },
   refinery: { n: 'НПЗ', cost: 8, steel: 60, d: [3, 4, 10], eff: 'Нефть +3/день' }, port: { n: 'Порт', cost: 9, steel: 80, d: [3, 5, 12], eff: 'Рынок: наценка -2%' },
@@ -77,14 +89,14 @@ function genPool(c) { c.mil.pool = []; for (let i = 0; i < 3; i++) c.mil.pool.pu
 function minPool(c, k) { c.mil.mpool[k] = []; for (let i = 0; i < 3; i++) c.mil.mpool[k].push({ name: personName(), skill: rint(1, 5), sal: 0 }); }
 function initHuman(c, late) {
   let e = c.economy; e.gdp = Math.max(e.gdp, 30);
-  const mkDiv = i => ({ id: i, name: `${c.name} ${i}-я дивизия`, tpl: 'Стандартная пехотная', max: 100, strength: 100, xp: 0, status: 'active', daysLeft: 0, army: 0, gen: 0 });
+  const mkDiv = i => ({ id: i, name: `${c.name} ${i}-я дивизия`, tpl: 'Стандартная пехотная', max: 100, strength: 100, xp: 0, status: 'active', daysLeft: 0, army: 0, gen: 0, tr: 0 });
   if (!late) {
     e.budget = 70; e.manpower = Math.round(e.manpowerCap * 0.4); c.army.divisions = [mkDiv(1), mkDiv(2)];
     c.factoryCount = 2; c.housingCount = 1;
   } else {
     // игрок занимает страну посреди партии: сохраняем то, что у страны уже есть
     e.budget = Math.max(e.budget, 50); e.manpower = Math.max(e.manpower, Math.round(e.manpowerCap * 0.25));
-    c.army.divisions.forEach(d => { d.tpl = d.tpl || 'Стандартная пехотная'; d.max = d.max || 100; d.xp = d.xp || 0; d.army = 0; d.gen = 0; });
+    c.army.divisions.forEach(d => { d.tpl = d.tpl || 'Стандартная пехотная'; d.max = d.max || 100; d.xp = d.xp || 0; d.army = 0; d.gen = 0; d.tr = d.tr === undefined ? 0 : d.tr; });
     if (!c.army.divisions.length) c.army.divisions = [mkDiv(1), mkDiv(2)];
     c.factoryCount = Math.max(c.factoryCount || 0, 2); c.housingCount = Math.max(c.housingCount || 0, 1);
   }
@@ -112,7 +124,7 @@ window.getCombatMult = function (cid, eid, role) {
   if (!c || !c.mil) m = 1;
   else if (!isHuman(cid)) m = (0.9 + c.mil.q * 0.1 + c.mil.botTech * 0.03) * (1 + (difficulty - 1) * 0.35);
   else {
-    let ag = armyAgg(c); m = 1 + techFx(c, role === 'att' ? 'att' : 'def') + (role === 'def' ? modSum(c, 'def') : 0) + modSum(c, 'mil') + (c.gov.stability - 50) / 500 + ag.gen * 0.03 + ag.xp * 0.001 + Math.min(0.1, bcount(c, 'airfield') * 0.015) + (role === 'att' ? ag.att : ag.def) + (c.economy.lvl.def - 50) / 500;
+    let ag = armyAgg(c); m = 1 + 2 * techFx(c, role === 'att' ? 'att' : 'def') + (role === 'def' ? modSum(c, 'def') : 0) + modSum(c, 'mil') + (c.gov.stability - 50) / 500 + ag.gen * 0.03 + ag.xp * 0.001 + Math.min(0.1, bcount(c, 'airfield') * 0.015) + (role === 'att' ? ag.att : ag.def) + (c.economy.lvl.def - 50) / 500;
     if (c.economy.res.oil <= 0) m -= 0.15;
     let nw = activeWarsOf(c.id); if (nw > 1) m *= Math.max(0.5, 1 - 0.07 * (nw - 1)); m -= Math.min(0.2, (c.gov.weary || 0) / 400);
   }
@@ -200,6 +212,8 @@ function resDay(c) {
   r.food += e.population * 0.4 * (c._agri = c._agri || rnd(.85, 1.15)) * aut * (1 + modSum(c, 'food')) - e.population * 0.4;
   r.steel += (3 + bcount(c, 'steelmill') * 3 + e.gdp * 0.03) * aut - c.factoryCount * 0.1;
   r.oil += (3 + bcount(c, 'refinery') * 3) * aut - (c.army.divisions.filter(d => d.status === 'active').length * 0.15 + c.factoryCount * 0.1);
+  { let nb = t => buildings.filter(b => b.ownerId === c.id && b.type === t && b.status === 'active').length, F = techFx(c, 'food'), S = techFx(c, 'steel'), O = techFx(c, 'oil');
+    r.food += nb('farm') * 6 * (1 + F) + e.population * 0.2 * F; r.steel += nb('mine') * 5 * (1 + S) + (3 + bcount(c, 'steelmill') * 3) * S; r.oil += nb('oilrig') * 5 * (1 + O) + (3 + bcount(c, 'refinery') * 3) * O; }
   if (r.food < 0) { r.food = 0; g.approval -= 0.4; if (currentTurn % 7 === 0) toast('⚠ Нехватка продовольствия! Закупите на рынке', 'warn'); }
   if (r.oil < 0) { r.oil = 0; if (currentTurn % 7 === 0) toast('⚠ Нет нефти: армия теряет боеспособность', 'warn'); }
   if (r.steel < 0) r.steel = 0;
@@ -222,7 +236,7 @@ window.updateCountryEconomics = function () {
   countries.forEach(c => {
     if (!c.economy) return; econDay(c);
     buildings.filter(b => b.ownerId === c.id && b.status === 'building').forEach(b => { b.daysLeft--; if (b.daysLeft <= 0) b.status = 'active'; });
-    if (c.army) c.army.divisions.forEach(d => { if (d.status === 'training') { d.daysLeft--; if (d.daysLeft <= 0) { d.status = 'active'; d.returning = 0; if (c.id === LOCAL) { toast(`🎖 «${d.name}» завершила формирование`, 'good'); addNewsEvent(`Дивизия "${d.name}" готова к бою`, 'war'); } } } });
+    if (c.army) c.army.divisions.forEach(d => { if (d.status === 'training') { d.daysLeft--; if (d.daysLeft <= 0) { d.status = 'active'; d.returning = 0; if (d.trTo !== undefined) { d.tr = d.trTo; delete d.trTo; } if (c.id === LOCAL) { toast(`🎖 «${d.name}» завершила формирование`, 'good'); addNewsEvent(`Дивизия "${d.name}" готова к бою`, 'war'); } } } });
   });
   processWars(); processConvoys(); humans.forEach(h => runAs(h, invDay));
 };
@@ -280,6 +294,12 @@ window.tryPlaceBuilding = function (type, wPos, targetC) {
   if (!BT[type] || !BT[type].map) return;
   if (!targetC || targetC.id !== playerCountryId) { toast('Строить можно только на своей территории', 'warn'); return; }
   if (type === 'port' && !isCoast(wPos.x, wPos.y)) { toast('Порт строится только на побережье', 'warn'); return; }
+  if (BT[type].dep) {
+    let d = deposits.find(d => d.k === BT[type].dep && Math.abs(d.x - wPos.x) < 7 && Math.abs(d.y - wPos.y) < 7); if (!d) { toast('Здесь нет месторождения — ищите значки 🌾⛏🛢 на карте', 'warn'); return; }
+    if (territoryOwner[d.y * OFF_W + d.x] !== targetC.numericId) { toast('Месторождение не на вашей территории', 'warn'); return; }
+    if (buildings.some(b => b.x === d.x && b.y === d.y && b.type === type) || projects.some(p => !p.done && p.site && p.site.x === d.x && p.site.y === d.y)) { toast('Это месторождение уже осваивается', 'warn'); return; }
+    A.newProject(type, window._pendContr || 'gov', { x: d.x, y: d.y }); setTool('inspect'); A.hub('build'); return;
+  }
   if (getBuildingsNear(type, playerCountryId, wPos.x, wPos.y, BUILD_CLUSTER_RADIUS).length >= BUILD_CLUSTER_HARD_CAP) { toast('Слишком плотная застройка', 'warn'); return; }
   if (territoryOwner[Math.floor(wPos.y) * OFF_W + Math.floor(wPos.x)] !== targetC.numericId) { toast('Выберите клетку на своей территории', 'warn'); return; }
   A.newProject(type, window._pendContr || 'gov', { x: Math.floor(wPos.x), y: Math.floor(wPos.y) }); setTool('inspect'); A.hub('build');
@@ -294,7 +314,7 @@ A.orderDiv = function (ti, n) {
     if (q.rifles < s.rifles || q.guns < s.guns || q.tanks < s.tanks) return toast(`Не хватает вооружения: нужно ${s.rifles} ружей, ${s.guns} орудий, ${s.tanks} танков`, 'warn');
     c.economy.budget -= cost; c.economy.manpower -= mpNeed; q.rifles -= s.rifles; q.guns -= s.guns; q.tanks -= s.tanks;
     let days = Math.max(2, Math.round(s.days * (1 - minSkill(c, 'def') * .04))); let nid = c.army.divisions.reduce((m, d) => Math.max(m, d.id), 0) + 1;
-    c.army.divisions.push({ id: nid, name: `${nid}-я ${t.name.split(' ')[0].toLowerCase()} дивизия`, tpl: t.name, b: Object.assign({}, t.b), max: Math.round(100 * s.q), strength: Math.round(100 * s.q), xp: 0, status: 'training', daysLeft: days, army: 0, gen: 0 });
+    c.army.divisions.push({ id: nid, name: `${nid}-я ${t.name.split(' ')[0].toLowerCase()} дивизия`, tpl: t.name, b: Object.assign({}, t.b), max: Math.round(100 * s.q), strength: Math.round(100 * s.q), xp: 0, tr: 0, status: 'training', daysLeft: days, army: 0, gen: 0 });
   }
   toast('Формирование начато', 'good'); hubRender();
 };
@@ -343,6 +363,11 @@ function sendDivisions(wid, pct, quiet) {
 }
 A.setPost = function (di, cid) { let d = me().army.divisions.find(x => x.id === di); if (!d) return; d.post = cid || ''; hubRender(); };
 A.setArmyPost = function (aid, cid) { me().army.divisions.forEach(d => { if (d.army === aid) d.post = cid || ''; }); hubRender(); };
+A.train = function (di) {
+  let c = me(), d = c.army.divisions.find(x => x.id === di); if (!d || d.status !== 'active') return toast('Тренировать можно только дивизию в тылу (не в бою)', 'warn'); let tr = d.tr === undefined ? 0 : d.tr; if (tr >= 4) return;
+  let cost = [1.5, 3, 6, 12][tr] * costMult(c), days = Math.max(2, Math.round([6, 10, 16, 26][tr] * (1 - Math.min(0.6, techFx(c, 'trn') + minSkill(c, 'def') * .03)))); if (c.economy.budget < cost) return toast('Не хватает денег на обучение', 'warn');
+  c.economy.budget -= cost; d.status = 'training'; d.daysLeft = days; d.returning = 0; d.trTo = tr + 1; hubRender();
+};
 A.recall = function (di) { let d = me().army.divisions.find(x => x.id === di); if (!d || d.status !== 'front') return; d.status = 'training'; d.daysLeft = 5; d.returning = 1; toast('Дивизия отозвана с фронта (5 дн. на возвращение)', 'info'); hubRender(); };
 A.autoSend = function () { me().autoSend = !me().autoSend; hubRender(); };
 function autoSendDivs() {
