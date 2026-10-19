@@ -877,6 +877,7 @@ canvas.addEventListener('mousedown', e => {
 let pendingClick = null;
 function doMapClick(wPos) {
     if (currentTool === 'border') { borderClick(wPos); return; }
+    if (currentTool === 'strike') { A.setTarget(window._strikeWar, wPos.x, wPos.y); setTool('inspect'); return; }
     if (!currentTool || currentTool === "inspect") for (const u of units) if (!u.dead && Math.abs(u.x - wPos.x) < Math.max(2.5, 8 / scale) && Math.abs(u.y - wPos.y) < Math.max(2, 6 / scale)) {
         let o = countryMap[u.owner], d = o && o.army && o.army.divisions.find(x => x.id === u.div); if (!d) continue; let di = divInfo(d);
         window.selDiv = (window.selDiv && window.selDiv.div === u.div && window.selDiv.owner === u.owner) ? null : { div: u.div, owner: u.owner }; draw(); return;
@@ -2759,7 +2760,7 @@ function computeLinePath(x0, y0, x1, y1) {
     return path;
 }
 
-function divInfo(d) { let a = 62, df = 62; if (d.b) { a = df = 0; for (let k in d.b) { a += d.b[k] * BAT[k][1]; df += d.b[k] * BAT[k][2]; } } let f = Math.max(0, d.strength) / (d.max || 100); let tf = TRF[d.tr === undefined ? 3 : d.tr]; return { atk: a * f * tf, def: df * f * tf }; }
+function divInfo(d) { let a = 62, df = 62; if (d.b) { a = df = 0; for (let k in d.b) { a += d.b[k] * BAT[k][1]; df += d.b[k] * BAT[k][2]; } } let f = Math.max(0, d.strength) / (d.max || 100); let tf = TRF[d.tr === undefined ? 3 : d.tr] * (d._sup || 1); return { atk: a * f * tf, def: df * f * tf }; }
 const TRN = ['дезорганизована', 'низкая', 'средняя', 'высокая', 'профессиональная'], TRF = [0.55, 0.75, 0.9, 1.0, 1.2];
 function divMen(d) { let m = 10000; if (d.b) { m = 0; for (let k in d.b) m += d.b[k] * BAT[k][3]; } return Math.round(m * Math.max(0, d.strength) / (d.max || 100)); }
 function divComp(d) { if (!d.b) return 'пехота'; return Object.keys(d.b).filter(k => d.b[k]).map(k => BAT[k][0].toLowerCase() + ' ' + d.b[k]).join(' · '); }
@@ -2854,7 +2855,15 @@ function sendReinforcementToFront(warId, percent) {
     renderArmyContent();
 }
 
-function processWars() {
+const WAR_SUB = 24, WK = 1.6 / (WAR_SUB + 1);   // боевые подшаги: ~24 раза в игровой день, интенсивность на подшаг
+function passSet(cid) { let s = new Set(); treaties.forEach(t => { if (t.status === 'active' && t.type === 'passage' && t.parties[0] === cid && countryMap[t.parties[1]]) s.add(countryMap[t.parties[1]].numericId); }); return s; }
+function supplyOf(cid, gi) {
+    let x = gi % OFF_W, y = (gi / OFF_W) | 0, best = 1e9;
+    for (const b of buildings) if (b.ownerId === cid && b.status === 'active' && (b.type === 'military' || b.type === 'supply')) { let d = Math.abs(b.x - x) + Math.abs(b.y - y); if (b.type === 'supply') d *= 0.5; if (d < best) best = d; }
+    if (best === 1e9) return 1;
+    let s = Math.max(0.35, Math.min(1.15, 1.15 - best / 220)), c = countryMap[cid]; if (c && isHuman(cid) && c.economy.res.oil <= 0) s *= 0.7; return s;
+}
+function processWars(sub) {
     if (activeWars.length === 0) return;
 
     // Общая военная мощь страны считается один раз за ход и делится между всеми
@@ -2881,8 +2890,7 @@ function processWars() {
         let bNum = countryMap[war.b].numericId;
         let minX = war.bbox.minX, minY = war.bbox.minY, maxX = war.bbox.maxX, maxY = war.bbox.maxY;
 
-        let reinforceA = getWarPowerShare(war.a);
-        let reinforceB = getWarPowerShare(war.b);
+        let reinforceA = 0, reinforceB = 0, passA = passSet(war.a), passB = passSet(war.b);
 
         let regionW = maxX - minX + 1;
         let regionH = maxY - minY + 1;
@@ -2912,12 +2920,12 @@ function processWars() {
                 let id = regionOwner[ry * regionW + rx];
                 if (id === aNum) aCount++;
                 else if (id === bNum) bCount++;
-                else continue;
+                else if (!(passA.has(id) || passB.has(id))) continue;
 
                 let n = [ownerAt(rx - 1, ry), ownerAt(rx + 1, ry), ownerAt(rx, ry - 1), ownerAt(rx, ry + 1)];
-                let enemyId = id === aNum ? bNum : aNum;
+                let isA = id === aNum || (id !== bNum && passA.has(id)), enemyId = isA ? bNum : aNum;
                 if (n.indexOf(enemyId) !== -1) {
-                    if (id === aNum) frontA.push([rx, ry]); else frontB.push([rx, ry]);
+                    if (isA) frontA.push([rx, ry]); else frontB.push([rx, ry]);
                 }
             }
         }
@@ -2937,18 +2945,19 @@ function processWars() {
 
         // Небольшое базовое подкрепление на линии (гарнизон держится сам по себе),
         // а основная сила подкрепления идёт колонной от военного узла - см. spawnConvoy ниже
-        frontA.forEach(([rx, ry]) => { nextTroops[ry * regionW + rx] += 0.1; });
-        frontB.forEach(([rx, ry]) => { nextTroops[ry * regionW + rx] += 0.1; });
+        frontA.forEach(([rx, ry]) => { nextTroops[ry * regionW + rx] += 0.1 / (WAR_SUB + 1); });
+        frontB.forEach(([rx, ry]) => { nextTroops[ry * regionW + rx] += 0.1 / (WAR_SUB + 1); });
 
         function autoSpawnConvoy(frontCells, amount, ownerId, colorSide) {
-            let oc = countryMap[ownerId]; if (frontCells.length === 0 || !oc.army) return;
+            let oc = countryMap[ownerId]; if (sub || frontCells.length === 0 || !oc.army) return;
             let enemy = war.a === ownerId ? war.b : war.a, act = oc.army.divisions.filter(d => d.status === 'active' && d.strength >= 20);
             // дивизии, поставленные на границу с этим врагом, идут сразу; бот дополнительно шлёт одну свободную раз в 3 дня
             let go = act.filter(d => d.post === enemy);
             if (!isHuman(ownerId) && currentTurn % 3 === 0) go = go.concat(act.filter(d => !d.post).sort((a, b) => b.strength - a.strength).slice(0, 1));
             go.forEach(d => {
-                let weakest = null, weakestTroops = Infinity;
-                frontCells.forEach(([rx, ry]) => {
+                let weakest = null, weakestTroops = Infinity, tg = (war.tg && war.tg[ownerId]) || [];
+                if (tg.length) { let p = tg[(currentTurn + d.id) % tg.length], gx = Math.round(p.x) - minX, gy = Math.round(p.y) - minY, bd = 1e9; frontCells.forEach(([rx, ry]) => { let dd = Math.abs(rx - gx) + Math.abs(ry - gy); if (dd < bd) { bd = dd; weakest = [rx, ry]; } }); }
+                else frontCells.forEach(([rx, ry]) => {
                     let t = regionTroops[ry * regionW + rx];
                     if (!isHuman(ownerId) && difficulty >= 1) { let foe = colorSide === 'a' ? bNum : aNum, m = 1e9;[[rx - 1, ry], [rx + 1, ry], [rx, ry - 1], [rx, ry + 1]].forEach(([nx, ny]) => { if (ownerAt(nx, ny) === foe) m = Math.min(m, regionTroops[ny * regionW + nx]); }); t = m - t * 0.5; }
                     if (t < weakestTroops) { weakestTroops = t; weakest = [rx, ry]; }
@@ -2964,18 +2973,30 @@ function processWars() {
         let cellDiv = new Map();
         function assignDivs(frontCells, ownerId) {
             let oc = countryMap[ownerId], L = frontCells.length;
-            let ds = oc.army && L ? oc.army.divisions.filter(d => d.status === 'front' && d.warId === war.id).sort((a, b) => a.id - b.id) : [], n = ds.length;
-            ds.forEach((d, i) => {
-                let s = Math.floor(i * L / n), e = Math.max(s + 1, Math.floor((i + 1) * L / n)), m = Math.min(L - 1, s + ((e - s) >> 1)), from = Math.max(s, m - 2), to = Math.min(L, e, from + 4);
-                d._seg = []; for (let k = from; k < to; k++) { let [rx, ry] = frontCells[k]; d._seg.push([rx, ry]); cellDiv.set(ry * regionW + rx, d); }
-                let [cx, cy] = frontCells[m]; d._gi = (minY + cy) * OFF_W + minX + cx;
+            let ds = oc.army && L ? oc.army.divisions.filter(d => d.status === 'front' && d.warId === war.id).sort((a, b) => a.id - b.id) : [];
+            ds.forEach(d => { d._seg = []; d._gi = 0; });
+            if (!ds.length) return ds;
+            let tg = (war.tg && war.tg[ownerId]) || [], groups;
+            if (tg.length) {   // точки удара: дивизии распределяются только по выбранным направлениям
+                groups = tg.map(p => { let gx = Math.round(p.x) - minX, gy = Math.round(p.y) - minY, dist = c => Math.abs(c[0] - gx) + Math.abs(c[1] - gy), cells = frontCells.filter(c => dist(c) < 45);
+                    if (!cells.length) cells = frontCells.slice().sort((a, b) => dist(a) - dist(b)).slice(0, 8); return { cells, ds: [] }; });
+                ds.forEach((d, i) => groups[i % groups.length].ds.push(d));
+            } else groups = [{ cells: frontCells, ds }];
+            groups.forEach(g => {
+                let n = g.ds.length, Lc = g.cells.length; if (!n || !Lc) return;
+                g.ds.forEach((d, i) => {
+                    let s = Math.floor(i * Lc / n), e = Math.max(s + 1, Math.floor((i + 1) * Lc / n)), m = Math.min(Lc - 1, s + ((e - s) >> 1)), from = Math.max(s, m - 2), to = Math.min(Lc, e, from + 4);
+                    for (let k = from; k < to; k++) { let [rx, ry] = g.cells[k]; d._seg.push([rx, ry]); cellDiv.set(ry * regionW + rx, d); }
+                    let [cx, cy] = g.cells[m]; d._gi = (minY + cy) * OFF_W + minX + cx; d._sup = supplyOf(ownerId, d._gi);
+                });
             });
             return ds;
         }
         function resolveCombat(ds, myNum, enemyNum, ownerId, enemyOwnerId) {
             ds.forEach(D => {
-                if (D.strength < (D.max || 100) * 0.3) return;
-                let di = divInfo(D);
+                if (D.strength < (D.max || 100) * 0.3 || !D._seg.length) return;
+                let di = divInfo(D), sup = D._sup || 1;
+                if (sup < 0.6) D.strength = Math.max(1, D.strength - (0.6 - sup) * 2 * WK);   // плохое снабжение выматывает дивизию
                 D._seg.forEach(([rx, ry]) => {
                     let nb = [[rx - 1, ry], [rx + 1, ry], [rx, ry - 1], [rx, ry + 1]], en = nb.filter(([nx, ny]) => ownerAt(nx, ny) === enemyNum);
                     if (!en.length) return;
@@ -2985,16 +3006,16 @@ function processWars() {
                     let defPower = (E ? divInfo(E).def : Math.min(15, regionTroops[ti])) * defMult * getCombatMult(enemyOwnerId, ownerId, "def");
                     let fl = nb.filter(([nx, ny]) => ownerAt(nx, ny) === myNum).length, flank = fl === 2 ? 1.3 : fl === 3 ? 1.6 : fl === 4 ? 2.2 : 1;
                     let attPower = di.atk * 0.6 * flank * getCombatMult(ownerId, enemyOwnerId, "att");
-                    if (attPower > defPower * 1.05) {          // наша сильнее: у них сила падает, мы продвигаемся
-                        if (E) E.strength = Math.max(1, E.strength - attPower * 0.05); else nextTroops[ti] = Math.max(0, nextTroops[ti] - attPower * 0.14);
-                        D.strength = Math.max(1, D.strength - defPower * 0.02);
+                    if (attPower > defPower * 1.05) {
+                        if (E) E.strength = Math.max(1, E.strength - attPower * 0.05 * WK); else nextTroops[ti] = Math.max(0, nextTroops[ti] - attPower * 0.14 * WK);
+                        D.strength = Math.max(1, D.strength - defPower * 0.02 * WK);
                         if (E ? E.strength < (E.max || 100) * 0.3 : nextTroops[ti] <= 0) {
                             nextOwner[ti] = myNum; nextTroops[ti] = 4; noteCapture(ownerId, enemyOwnerId, minX + tx, minY + ty);
                             if (RNG() < 0.15 && (isHuman(ownerId) || isHuman(enemyOwnerId))) addNewsEvent(`Бой на фронте: ${countryMap[ownerId].name} занимает сектор [${minX + tx},${minY + ty}]`, 'war');
                         }
-                    } else if (defPower > attPower * 1.05) {   // наша слабее: теряем силу и отходим
-                        D.strength = Math.max(1, D.strength - defPower * 0.04);
-                        if (E) E.strength = Math.max(1, E.strength - attPower * 0.01);
+                    } else if (defPower > attPower * 1.05) {
+                        D.strength = Math.max(1, D.strength - defPower * 0.04 * WK);
+                        if (E) E.strength = Math.max(1, E.strength - attPower * 0.01 * WK);
                     }
                 });
             });
