@@ -344,10 +344,11 @@ function researchDay() {
 }
 A.reinfWar = function (wid, p) { sendDivisions(wid, p); };
 function bestAttackCell(war, cid) {
+  let tg = (war.tg && war.tg[cid]) || [], tp = tg.length ? tg[currentTurn % tg.length] : null;
   let A_ = countryMap[cid], B_ = countryMap[war.a === cid ? war.b : war.a]; if (!A_ || !B_) return null; const T = territoryOwner, an = A_.numericId, bn = B_.numericId, { minX, minY, maxX, maxY } = war.bbox; let best = null, bv = 1e9;
   for (let y = minY; y <= maxY; y++) for (let x = minX; x <= maxX; x++) { let gi = y * OFF_W + x; if (T[gi] !== an) continue; let m = 1e9;
     if (T[gi - 1] === bn) m = Math.min(m, warTroops[gi - 1]); if (T[gi + 1] === bn) m = Math.min(m, warTroops[gi + 1]); if (T[gi - OFF_W] === bn) m = Math.min(m, warTroops[gi - OFF_W]); if (T[gi + OFF_W] === bn) m = Math.min(m, warTroops[gi + OFF_W]);
-    if (m === 1e9) continue; let v = m - 0.5 * warTroops[gi]; if (v < bv) { bv = v; best = { x, y }; } }
+    if (m === 1e9) continue; let v = tp ? Math.abs(x - tp.x) + Math.abs(y - tp.y) : m - 0.5 * warTroops[gi]; if (v < bv) { bv = v; best = { x, y }; } }
   return best;
 }
 function sendDivisions(wid, pct, quiet) {
@@ -368,6 +369,12 @@ A.train = function (di) {
   let cost = [1.5, 3, 6, 12][tr] * costMult(c), days = Math.max(2, Math.round([6, 10, 16, 26][tr] * (1 - Math.min(0.6, techFx(c, 'trn') + minSkill(c, 'def') * .03)))); if (c.economy.budget < cost) return toast('Не хватает денег на обучение', 'warn');
   c.economy.budget -= cost; d.status = 'training'; d.daysLeft = days; d.returning = 0; d.trTo = tr + 1; hubRender();
 };
+A.setTarget = function (wid, x, y) {
+  let c = me(), w = activeWars.find(v => v.id === wid); if (!w || (w.a !== c.id && w.b !== c.id)) return;
+  w.tg = w.tg || {}; let l = w.tg[c.id] = w.tg[c.id] || []; if (l.length >= 3) l.shift(); l.push({ x: Math.round(+x), y: Math.round(+y) }); toast('🎯 Точка удара назначена: дивизии получат приоритет на этом направлении', 'good'); hubRender();
+};
+A.clearTargets = function (wid) { let c = me(), w = activeWars.find(v => v.id === wid); if (w && w.tg) delete w.tg[c.id]; hubRender(); };
+A.strikeMode = function (wid) { window._strikeWar = wid; setTool('strike'); A.hubClose(); toast('Кликните по карте там, где нужен прорыв (до 3 точек). Войска будут наступать только на выбранных направлениях.', 'info'); };
 A.recall = function (di) { let d = me().army.divisions.find(x => x.id === di); if (!d || d.status !== 'front') return; d.status = 'training'; d.daysLeft = 5; d.returning = 1; toast('Дивизия отозвана с фронта (5 дн. на возвращение)', 'info'); hubRender(); };
 A.autoSend = function () { me().autoSend = !me().autoSend; hubRender(); };
 function autoSendDivs() {
