@@ -2650,14 +2650,14 @@ function startWar(aId, bId) {
 
 function restoreWarBorders(war) {
     if (!war || !war.originalOwner) return;
-    let { minX, minY, maxX, maxY } = war.bbox;
+    let { minX, minY, maxX, maxY } = war.bbox, aN = countryMap[war.a] && countryMap[war.a].numericId, bN = countryMap[war.b] && countryMap[war.b].numericId;
     let regionW = maxX - minX + 1;
     let regionH = maxY - minY + 1;
     for (let y = 0; y < regionH; y++) {
         for (let x = 0; x < regionW; x++) {
-            let gi = (minY + y) * OFF_W + (minX + x);
-            territoryOwner[gi] = war.originalOwner[y * regionW + x];
-            warTroops[gi] = 0;
+            let gi = (minY + y) * OFF_W + (minX + x), orig = war.originalOwner[y * regionW + x], cur = territoryOwner[gi];
+            // возвращаем только земли между воевавшими сторонами; чужие/присоединённые страны не трогаем
+            if ((orig === aN || orig === bN) && (cur === aN || cur === bN)) { territoryOwner[gi] = orig; warTroops[gi] = 0; }
         }
     }
     renderOffscreenMap();
