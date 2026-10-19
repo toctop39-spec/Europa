@@ -45,7 +45,7 @@ function sendCmd(name, args) {
   if (!isHuman(LOCAL)) { toast('Вы наблюдатель: выберите страну, чтобы играть', 'warn'); openLobby(); return; }
   NET.send({ t: 'cmd', name, args: JSON.parse(JSON.stringify(args || [])) });
 }
-const WRAP = ['newProject', 'orderDiv', 'saveTpl', 'reinf', 'disband', 'hireGen', 'newArmy', 'setStance', 'armyGen', 'divArmy', 'setPost', 'setArmyPost', 'reinfAll', 'train', 'setLine', 'setCiv', 'research', 'reinfWar', 'recall', 'autoSend', 'ceasefire', 'cb', 'warDoc', 'docDo', 'invest', 'issueBond', 'printMoney', 'trade', 'setLvl', 'setTax', 'setRate', 'law', 'decree', 'hire', 'fire', 'sanction', 'aid', 'spy', 'sabotage', 'buildShip', 'cancelP', 'pauseP', 'prioP'];
+const WRAP = ['newProject', 'orderDiv', 'saveTpl', 'reinf', 'disband', 'hireGen', 'newArmy', 'setStance', 'armyGen', 'divArmy', 'setPost', 'setArmyPost', 'reinfAll', 'train', 'setTarget', 'clearTargets', 'setLine', 'setCiv', 'research', 'reinfWar', 'recall', 'autoSend', 'ceasefire', 'cb', 'warDoc', 'docDo', 'invest', 'issueBond', 'printMoney', 'trade', 'setLvl', 'setTax', 'setRate', 'law', 'decree', 'hire', 'fire', 'sanction', 'aid', 'spy', 'sabotage', 'buildShip', 'cancelP', 'pauseP', 'prioP'];
 WRAP.forEach(n => {
   const impl = A[n]; if (typeof impl !== 'function') { console.warn('нет A.' + n); return; }
   CMDS[n] = impl;
@@ -72,7 +72,7 @@ CMDS.$leave = function () {
 };
 
 // ---------- договоры, кредиты (игрок ↔ игрок и игрок ↔ ИИ) ----------
-const TREATY_NAMES = { trade: 'Торговое соглашение', non_aggression: 'Пакт о ненападении', alliance: 'Военный союз', cultural_exchange: 'Культурный обмен' };
+const TREATY_NAMES = { trade: 'Торговое соглашение', non_aggression: 'Пакт о ненападении', alliance: 'Военный союз', cultural_exchange: 'Культурный обмен', passage: 'Право прохода войск' };
 function relSet(a, b, st, onlyIf) {
   [[a, b], [b, a]].forEach(([x, y]) => { const r = diplomaticRelations[x] && diplomaticRelations[x][y]; if (r && (!onlyIf || onlyIf.includes(r.status))) r.status = st; });
 }
@@ -186,7 +186,17 @@ function stateHash() {
   for (let i = 0; i < warTroops.length; i += 193) mix(warTroops[i]);
   return h >>> 0;
 }
+let subLeft = 0, subTimer = 0;
+function runSub() {
+  if (subLeft <= 0) return; subLeft--;
+  const pc = playerCountryId;
+  try { playerCountryId = ''; ctxActor = ''; Date.now = detNow; ctxDepth++; try { processWars(true); } catch (e) { console.error('sub', e); } finally { ctxDepth--; } }
+  finally { playerCountryId = pc; ctxActor = ''; Date.now = realNow; }
+  if (!suppressUI) { mapDirty = true; try { refreshUnits(); if (subLeft % 6 === 0) updateWarOverlay(); } catch (e) { } }
+}
+function flushSubs() { clearInterval(subTimer); subTimer = 0; while (subLeft > 0) runSub(); }
 function stepTick(n, cmds) {
+  flushSubs();
   const pc = playerCountryId;
   try {
     cmds.forEach(c => { if (c.name === '$join' || c.name === '$leave' || isHuman(c.f)) { if (CMDS[c.name]) runAs(c.f, () => { try { CMDS[c.name].apply(null, c.args || []); } catch (e) { console.error('cmd', c.name, e); } }); } });
@@ -195,6 +205,7 @@ function stepTick(n, cmds) {
   } finally { playerCountryId = pc; ctxActor = ''; Date.now = realNow; }
   tickNo = n; dayCounter++;
   if (n % 30 === 0) NET.send({ t: 'hash', n, h: stateHash() });
+  if (activeWars.length) { subLeft = WAR_SUB; if (remaining() <= 1 && !suppressUI) subTimer = setInterval(runSub, DAY_MS / (WAR_SUB + 1)); }
 }
 const realNow = Date.now.bind(Date);
 let queue = [], replay = null, pumping = false, bootDone = false;
