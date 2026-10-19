@@ -268,6 +268,16 @@ function drawUnits() {
     ctx.globalAlpha = a; ctx.drawImage(getFlagCanvas(u.owner), x - w / 2, y - h / 2, w, h);
     if (scale >= 4) ctx.strokeRect(x - w / 2, y - h / 2, w, h);
   }
+  if (window.selDiv) {
+    let u = units.find(v => !v.dead && v.div === selDiv.div && v.owner === selDiv.owner), o = u && countryMap[u.owner], d = o && o.army.divisions.find(x => x.id === u.div);
+    if (!d) window.selDiv = null; else {
+      let di = divInfo(d), L = [`«${d.name}»`, `Людей: ${divMen(d).toLocaleString('ru-RU')}`, `Поддержка правительства: ${Math.round(o.gov ? o.gov.approval : 50)}%`, `Подготовка: ${TRN[d.tr === undefined ? 3 : d.tr]}`, `Атака ${Math.round(di.atk)} · Защита ${Math.round(di.def)} · Сила ${Math.round(d.strength)}/${d.max || 100}`], fs = 9 / scale, lh = fs * 1.35, pad = 4 / scale;
+      ctx.save(); ctx.globalAlpha = 1; ctx.font = `${fs}px Verdana, sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      let w = Math.max(...L.map(t => ctx.measureText(t).width)) + pad * 2, h = lh * L.length + pad * 2, x = u.x - w / 2, y = u.y - h - 5 / scale;
+      ctx.fillStyle = 'rgba(15,23,42,.92)'; ctx.fillRect(x, y, w, h); ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1 / scale; ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = '#fff'; L.forEach((t, i) => ctx.fillText(t, x + pad, y + pad + i * lh)); ctx.restore();
+    }
+  }
   for (const cv of convoys) {
     let i = cv.prev + (cv.pathIndex - cv.prev) * t; i = clamp(i, 0, cv.path.length - 1);
     let p0 = cv.path[Math.floor(i)], p1 = cv.path[Math.min(cv.path.length - 1, Math.floor(i) + 1)], f = i - Math.floor(i);
@@ -285,10 +295,13 @@ window.draw = function () {
   { let sx = Math.max(0, Math.floor(-panX / scale) - 2), sy = Math.max(0, Math.floor(-panY / scale) - 2), ex = Math.min(OFF_W, Math.ceil((width - panX) / scale) + 2), ey = Math.min(OFF_H, Math.ceil((height - panY) / scale) + 2), sw = ex - sx, sh = ey - sy;
     if (sw > 0 && sh > 0) { let src = scale < 1.3 && midOK ? midCanvas : smoothCanvas, k = src.width / OFF_W; ctx.drawImage(src, sx * k, sy * k, sw * k, sh * k, sx, sy, sw, sh);
       if (warOverlayCanvas && activeWars.length) ctx.drawImage(warOverlayCanvas, sx, sy, sw, sh, sx, sy, sw, sh); } }
-  const BI = { supply: '📦', defense: '🛡️', military: '🏰', port: '⚓' }; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const BI = { supply: '📦', defense: '🛡️', military: '🏰', port: '⚓', farm: '🌾', mine: '⛏', oilrig: '🛢' }; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   buildings.forEach(b => { let cfg = BUILDING_TYPES[b.type]; if (!cfg) return; let r = 7 / scale; ctx.fillStyle = cfg.color; ctx.strokeStyle = '#000'; ctx.lineWidth = 1 / scale; ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7); ctx.fill(); ctx.stroke();
     ctx.font = `${r * 1.35}px sans-serif`; ctx.fillStyle = '#fff'; ctx.fillText(BI[b.type] || '■', b.x, b.y + r * 0.08);
     if (b.type === 'military') { let fw = r * 1.7; ctx.drawImage(getFlagCanvas(b.ownerId), b.x - fw / 2, b.y - r - fw * 0.75, fw, fw * 0.667); ctx.strokeRect(b.x - fw / 2, b.y - r - fw * 0.75, fw, fw * 0.667); } });
+  { ctx.font = `${12 / scale}px sans-serif`; let hl = typeof currentTool === 'string' && currentTool.indexOf('build_') === 0 ? currentTool.slice(6) : '';
+    deposits.forEach(d => { let taken = buildings.some(b => b.x === d.x && b.y === d.y); ctx.globalAlpha = taken ? 0.35 : 0.95; ctx.fillText(DEP[d.k][0], d.x, d.y);
+      if (hl === DEP[d.k][2] && !taken) { ctx.globalAlpha = 1; ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2 / scale; ctx.beginPath(); ctx.arc(d.x, d.y, 9 / scale, 0, 7); ctx.stroke(); } }); ctx.globalAlpha = 1; }
   if (typeof projects !== 'undefined') projects.forEach(p => {
     if (!p.site) return; 
     { let r = 7 / scale; ctx.font = `${r * 1.35}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = 0.6 + 0.4 * Math.sin(performance.now() / 250); ctx.fillStyle = '#fff'; ctx.fillText('🚧', p.site.x, p.site.y); ctx.globalAlpha = 1; }
@@ -393,5 +406,5 @@ const _initGrid = initGrid;
 window.initGrid = async function () {
   await _initGrid(); if (!countries.length) return;
   try { let fx = fixStrayPixels(); console.log('stray pixels fixed', fx); if (fx) renderOffscreenMap(); computeLabels(); countries.forEach(c => { let m = _mainComp[c.numericId]; if (m && c._lc) { c._lc.x = m.cx; c._lc.y = m.cy; } }); computeAdjacency(); countries.forEach(initExt); initAlliances(); simDate = new Date(Date.UTC(2009, 0, 1)); currentTurn = 1; refreshDateDisplays(); } catch (e) { console.error(e); }
-  mapDirty = true;
+  mapDirty = true; genDeposits();
 };
