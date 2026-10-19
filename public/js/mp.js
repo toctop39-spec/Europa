@@ -45,11 +45,11 @@ function sendCmd(name, args) {
   if (!isHuman(LOCAL)) { toast('Вы наблюдатель: выберите страну, чтобы играть', 'warn'); openLobby(); return; }
   NET.send({ t: 'cmd', name, args: JSON.parse(JSON.stringify(args || [])) });
 }
-const WRAP = ['newProject', 'orderDiv', 'saveTpl', 'reinf', 'disband', 'hireGen', 'newArmy', 'setStance', 'armyGen', 'divArmy', 'setPost', 'setArmyPost', 'setLine', 'setCiv', 'research', 'reinfWar', 'recall', 'autoSend', 'ceasefire', 'cb', 'warDoc', 'docDo', 'invest', 'issueBond', 'printMoney', 'trade', 'setLvl', 'setTax', 'setRate', 'law', 'decree', 'hire', 'fire', 'sanction', 'aid', 'spy', 'sabotage', 'buildShip', 'cancelP', 'pauseP', 'prioP'];
+const WRAP = ['newProject', 'orderDiv', 'saveTpl', 'reinf', 'disband', 'hireGen', 'newArmy', 'setStance', 'armyGen', 'divArmy', 'setPost', 'setArmyPost', 'reinfAll', 'train', 'setLine', 'setCiv', 'research', 'reinfWar', 'recall', 'autoSend', 'ceasefire', 'cb', 'warDoc', 'docDo', 'invest', 'issueBond', 'printMoney', 'trade', 'setLvl', 'setTax', 'setRate', 'law', 'decree', 'hire', 'fire', 'sanction', 'aid', 'spy', 'sabotage', 'buildShip', 'cancelP', 'pauseP', 'prioP'];
 WRAP.forEach(n => {
   const impl = A[n]; if (typeof impl !== 'function') { console.warn('нет A.' + n); return; }
   CMDS[n] = impl;
-  A[n] = function () { const a = Array.prototype.slice.call(arguments); if (ctxDepth > 0 || replaying) return impl.apply(null, a); return sendCmd(n, a); };
+  A[n] = function () { const a = Array.prototype.slice.call(arguments); if (ctxDepth > 0 || replaying) return impl.apply(null, a); if (!replaying && isHuman(LOCAL)) { try { if (n === 'docDo') { const d = docs.find(x => x.id === a[0]); if (d) d._sent = 1; } else if (n === 'divArmy') { const d = countryMap[LOCAL].army.divisions.find(x => x.id === a[0]); if (d) d._pend = +a[1]; } else toast('⏳ Приказ отдан — вступит в силу в начале следующего дня', 'info'); } catch (e) { } if (window.hubRender) hubRender(true); } return sendCmd(n, a); };
 });
 CMDS.seaOrder = (x, y, n) => seaOrder(+x | 0, +y | 0, +n | 0);
 CMDS.dealExec = (id, d) => window.dealExec(id, d);
