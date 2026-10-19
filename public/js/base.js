@@ -89,6 +89,7 @@ let convoyIdCounter = 1;
 let constructionAnimationActive = false;
 
 const BUILDING_TYPES = {
+    farm: { name: 'Агрокомплекс', color: '#65a30d', baseCost: 0.3 }, mine: { name: 'Рудник', color: '#78716c', baseCost: 0.3 }, oilrig: { name: 'Нефтяная вышка', color: '#171717', baseCost: 0.3 },
     supply:   { name: 'Центр снабжения',      color: '#22c55e', baseCost: 0.25 },
     defense:  { name: 'Оборонительный штаб',   color: '#3b82f6', baseCost: 0.35 },
     military: { name: 'Военный узел',          color: '#ef4444', baseCost: 0.45 }
@@ -876,9 +877,9 @@ canvas.addEventListener('mousedown', e => {
 let pendingClick = null;
 function doMapClick(wPos) {
     if (currentTool === 'border') { borderClick(wPos); return; }
-    if (!currentTool || currentTool === "inspect") for (const u of units) if (!u.dead && Math.abs(u.x - wPos.x) < 2.5 && Math.abs(u.y - wPos.y) < 2) {
+    if (!currentTool || currentTool === "inspect") for (const u of units) if (!u.dead && Math.abs(u.x - wPos.x) < Math.max(2.5, 8 / scale) && Math.abs(u.y - wPos.y) < Math.max(2, 6 / scale)) {
         let o = countryMap[u.owner], d = o && o.army && o.army.divisions.find(x => x.id === u.div); if (!d) continue; let di = divInfo(d);
-        toast(`${o.name}: «${d.name}» — ${divComp(d)} · атака ${Math.round(di.atk)} · защита ${Math.round(di.def)} · сила ${Math.round(d.strength)}/${d.max || 100}`, 'info'); return;
+        window.selDiv = (window.selDiv && window.selDiv.div === u.div && window.selDiv.owner === u.owner) ? null : { div: u.div, owner: u.owner }; draw(); return;
     }
     let targetC = getCountryAtPos(wPos);
     if (currentTool === 'inspect' && targetC) {
@@ -2758,7 +2759,9 @@ function computeLinePath(x0, y0, x1, y1) {
     return path;
 }
 
-function divInfo(d) { let a = 62, df = 62; if (d.b) { a = df = 0; for (let k in d.b) { a += d.b[k] * BAT[k][1]; df += d.b[k] * BAT[k][2]; } } let f = Math.max(0, d.strength) / (d.max || 100); return { atk: a * f, def: df * f }; }
+function divInfo(d) { let a = 62, df = 62; if (d.b) { a = df = 0; for (let k in d.b) { a += d.b[k] * BAT[k][1]; df += d.b[k] * BAT[k][2]; } } let f = Math.max(0, d.strength) / (d.max || 100); let tf = TRF[d.tr === undefined ? 3 : d.tr]; return { atk: a * f * tf, def: df * f * tf }; }
+const TRN = ['дезорганизована', 'низкая', 'средняя', 'высокая', 'профессиональная'], TRF = [0.55, 0.75, 0.9, 1.0, 1.2];
+function divMen(d) { let m = 10000; if (d.b) { m = 0; for (let k in d.b) m += d.b[k] * BAT[k][3]; } return Math.round(m * Math.max(0, d.strength) / (d.max || 100)); }
 function divComp(d) { if (!d.b) return 'пехота'; return Object.keys(d.b).filter(k => d.b[k]).map(k => BAT[k][0].toLowerCase() + ' ' + d.b[k]).join(' · '); }
 function spawnConvoy(countryId, targetX, targetY, power, colorSide, warId) {
     let hubPos = getHubPosition(countryId);
