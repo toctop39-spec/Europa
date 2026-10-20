@@ -296,16 +296,17 @@ window.draw = function () {
   { let sx = Math.max(0, Math.floor(-panX / scale) - 2), sy = Math.max(0, Math.floor(-panY / scale) - 2), ex = Math.min(OFF_W, Math.ceil((width - panX) / scale) + 2), ey = Math.min(OFF_H, Math.ceil((height - panY) / scale) + 2), sw = ex - sx, sh = ey - sy;
     if (sw > 0 && sh > 0) { let src = scale < 1.3 && midOK ? midCanvas : smoothCanvas, k = src.width / OFF_W; ctx.drawImage(src, sx * k, sy * k, sw * k, sh * k, sx, sy, sw, sh);
       if (warOverlayCanvas && activeWars.length) ctx.drawImage(warOverlayCanvas, sx, sy, sw, sh, sx, sy, sw, sh); } }
-  const BI = { supply: '📦', defense: '🛡️', military: '🏰', port: '⚓', farm: '🌾', mine: '⛏', oilrig: '🛢' }; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const BI = { supply: '📦', defense: '🛡️', military: '🏰', port: '⚓', farm: 'Е', mine: 'С', oilrig: 'Н' }; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   buildings.forEach(b => { let cfg = BUILDING_TYPES[b.type]; if (!cfg) return; let r = 7 / scale; ctx.fillStyle = cfg.color; ctx.strokeStyle = '#000'; ctx.lineWidth = 1 / scale; ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7); ctx.fill(); ctx.stroke();
     ctx.font = `${r * 1.35}px sans-serif`; ctx.fillStyle = '#fff'; ctx.fillText(BI[b.type] || '■', b.x, b.y + r * 0.08);
     if (b.type === 'military') { let fw = r * 1.7; ctx.drawImage(getFlagCanvas(b.ownerId), b.x - fw / 2, b.y - r - fw * 0.75, fw, fw * 0.667); ctx.strokeRect(b.x - fw / 2, b.y - r - fw * 0.75, fw, fw * 0.667); } });
   { ctx.font = `${12 / scale}px sans-serif`; let hl = typeof currentTool === 'string' && currentTool.indexOf('build_') === 0 ? currentTool.slice(6) : '';
-    deposits.forEach(d => { let taken = buildings.some(b => b.x === d.x && b.y === d.y); ctx.globalAlpha = taken ? 0.35 : 0.95; ctx.fillText(DEP[d.k][0], d.x, d.y);
+    deposits.forEach(d => { let taken = buildings.some(b => b.x === d.x && b.y === d.y); ctx.globalAlpha = taken ? 0.35 : 0.95; { let r = 4.5 / scale; ctx.fillStyle = d.k === 'food' ? '#a3b83a' : d.k === 'steel' ? '#94a3b8' : '#374151'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1 / scale; ctx.beginPath();
+        if (d.k === 'food') ctx.arc(d.x, d.y, r, 0, 7); else if (d.k === 'steel') ctx.rect(d.x - r, d.y - r, 2 * r, 2 * r); else { ctx.moveTo(d.x, d.y - r * 1.3); ctx.lineTo(d.x + r * 1.1, d.y); ctx.lineTo(d.x, d.y + r * 1.3); ctx.lineTo(d.x - r * 1.1, d.y); ctx.closePath(); } ctx.fill(); ctx.stroke(); ctx.fillStyle = '#fff'; }
       if (hl === DEP[d.k][2] && !taken) { ctx.globalAlpha = 1; ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2 / scale; ctx.beginPath(); ctx.arc(d.x, d.y, 9 / scale, 0, 7); ctx.stroke(); } }); ctx.globalAlpha = 1; }
   activeWars.forEach(w => { let l = w.tg && w.tg[LOCAL]; if (l) l.forEach(p => { ctx.globalAlpha = 1; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2 / scale; ctx.beginPath(); ctx.arc(p.x, p.y, 10 / scale, 0, 7); ctx.stroke(); ctx.font = `${16 / scale}px sans-serif`; ctx.fillText('🎯', p.x, p.y); }); });
   if (typeof projects !== 'undefined') projects.forEach(p => {
-    if (!p.site) return; 
+    if (!p.site || p.owner !== LOCAL) return; 
     { let r = 7 / scale; ctx.font = `${r * 1.35}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = 0.6 + 0.4 * Math.sin(performance.now() / 250); ctx.fillStyle = '#fff'; ctx.fillText('🚧', p.site.x, p.site.y); ctx.globalAlpha = 1; }
   });
   let fs = 11 / scale; ctx.font = `bold ${fs}px Verdana, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.lineWidth = 2 / scale; ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000';
