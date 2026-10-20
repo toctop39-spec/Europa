@@ -210,10 +210,11 @@ function econDay(c) {
 function resDay(c) {
   let e = c.economy, r = e.res, g = c.gov, aut = g.laws.trade === 3 ? 1.25 : g.laws.trade === 2 ? 1.1 : 1;
   r.food += e.population * 0.4 * (c._agri = c._agri || rnd(.85, 1.15)) * aut * (1 + modSum(c, 'food')) - e.population * 0.4;
-  r.steel += (3 + bcount(c, 'steelmill') * 3 + e.gdp * 0.03) * aut - c.factoryCount * 0.1;
-  r.oil += (3 + bcount(c, 'refinery') * 3) * aut - (c.army.divisions.filter(d => d.status === 'active').length * 0.15 + c.factoryCount * 0.1);
-  { let nb = t => buildings.filter(b => b.ownerId === c.id && b.type === t && b.status === 'active').length, F = techFx(c, 'food'), S = techFx(c, 'steel'), O = techFx(c, 'oil');
-    r.food += nb('farm') * 6 * (1 + F) + e.population * 0.2 * F; r.steel += nb('mine') * 5 * (1 + S) + (3 + bcount(c, 'steelmill') * 3) * S; r.oil += nb('oilrig') * 5 * (1 + O) + (3 + bcount(c, 'refinery') * 3) * O; }
+  r.steel += (3 + bcount(c, 'steelmill') * 3 * ((c.out && c.out.steelmill !== undefined ? c.out.steelmill : 100) / 100) + e.gdp * 0.03) * aut - c.factoryCount * 0.1;
+  r.oil += (3 + bcount(c, 'refinery') * 3 * ((c.out && c.out.refinery !== undefined ? c.out.refinery : 100) / 100)) * aut - (c.army.divisions.filter(d => d.status === 'active').length * 0.15 + c.factoryCount * 0.1);
+  { let nb = t => buildings.reduce((q, b) => q + (b.ownerId === c.id && b.type === t && b.status === 'active' ? (b.out === undefined ? 100 : b.out) / 100 : 0), 0), F = techFx(c, 'food'), S = techFx(c, 'steel'), O = techFx(c, 'oil');
+    r.food += nb('farm') * 6 * (1 + F) + e.population * 0.2 * F; r.steel += nb('mine') * 5 * (1 + S) + (3 + bcount(c, 'steelmill') * 3) * S; r.oil += nb('oilrig') * 5 * (1 + O) + (3 + bcount(c, 'refinery') * 3) * O;
+    e.budget -= (nb('farm') + nb('mine') + nb('oilrig')) * 0.04; }
   if (r.food < 0) { r.food = 0; g.approval -= 0.4; if (currentTurn % 7 === 0) toast('⚠ Нехватка продовольствия! Закупите на рынке', 'warn'); }
   if (r.oil < 0) { r.oil = 0; if (currentTurn % 7 === 0) toast('⚠ Нет нефти: армия теряет боеспособность', 'warn'); }
   if (r.steel < 0) r.steel = 0;
