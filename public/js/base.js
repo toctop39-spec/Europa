@@ -2987,7 +2987,9 @@ function processWars(sub) {
                 g.ds.forEach((d, i) => {
                     let s = Math.floor(i * Lc / n), e = Math.max(s + 1, Math.floor((i + 1) * Lc / n)), m = Math.min(Lc - 1, s + ((e - s) >> 1)), from = Math.max(s, m - 2), to = Math.min(Lc, e, from + 4);
                     for (let k = from; k < to; k++) { let [rx, ry] = g.cells[k]; d._seg.push([rx, ry]); cellDiv.set(ry * regionW + rx, d); }
-                    let [cx, cy] = g.cells[m]; d._gi = (minY + cy) * OFF_W + minX + cx; d._sup = supplyOf(ownerId, d._gi);
+                    let [cx, cy] = g.cells[m], wx = minX + cx, wy = minY + cy, px = wx, py = wy;
+                    if (d._fg) { px = d._fg % OFF_W; py = (d._fg / OFF_W) | 0; let dd = Math.abs(wx - px) + Math.abs(wy - py); if (dd > 30) { px = wx; py = wy; } else if (dd > 3) { px += Math.sign(wx - px); py += Math.sign(wy - py); } }   // флаг смещается плавно и недалеко
+                    d._fg = d._gi = py * OFF_W + px; d._sup = supplyOf(ownerId, d._gi);
                 });
             });
             return ds;
