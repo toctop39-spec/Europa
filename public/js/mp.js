@@ -45,7 +45,7 @@ function sendCmd(name, args) {
   if (!isHuman(LOCAL)) { toast('Вы наблюдатель: выберите страну, чтобы играть', 'warn'); openLobby(); return; }
   NET.send({ t: 'cmd', name, args: JSON.parse(JSON.stringify(args || [])) });
 }
-const WRAP = ['newProject', 'orderDiv', 'saveTpl', 'reinf', 'disband', 'hireGen', 'newArmy', 'setStance', 'armyGen', 'divArmy', 'setPost', 'setArmyPost', 'reinfAll', 'train', 'setTarget', 'clearTargets', 'setLine', 'setCiv', 'research', 'reinfWar', 'recall', 'autoSend', 'ceasefire', 'cb', 'warDoc', 'docDo', 'invest', 'issueBond', 'printMoney', 'trade', 'setLvl', 'setTax', 'setRate', 'law', 'decree', 'hire', 'fire', 'sanction', 'aid', 'spy', 'sabotage', 'buildShip', 'cancelP', 'pauseP', 'prioP'];
+const WRAP = ['newProject', 'orderDiv', 'saveTpl', 'reinf', 'disband', 'hireGen', 'newArmy', 'setStance', 'armyGen', 'divArmy', 'setPost', 'setArmyPost', 'reinfAll', 'train', 'setTarget', 'clearTargets', 'tradeOffer', 'tradeCancel', 'blockade', 'setOut', 'setLine', 'setCiv', 'research', 'reinfWar', 'recall', 'autoSend', 'ceasefire', 'cb', 'warDoc', 'docDo', 'invest', 'issueBond', 'printMoney', 'trade', 'setLvl', 'setTax', 'setRate', 'law', 'decree', 'hire', 'fire', 'sanction', 'aid', 'spy', 'sabotage', 'buildShip', 'cancelP', 'pauseP', 'prioP'];
 WRAP.forEach(n => {
   const impl = A[n]; if (typeof impl !== 'function') { console.warn('нет A.' + n); return; }
   CMDS[n] = impl;
@@ -422,6 +422,7 @@ window.tDipl = function (c) {
     const o = countryMap[dipSel], p = taken.get(o.id), warNow = atWarWith(c.id, o.id);
     sel = `<div class="cd"><h4>${flagImg(o.id, 22)} ${o.name}${p ? ` — игрок ${p.name.replace(/</g, '')}` : ' — ИИ'}</h4>
     <div>${p ? 'Предложения попадут в «Канцелярию» игрока, решает он.' : 'ИИ решит в течение нескольких дней по отношениям и доверию.'}</div>
+    <div style="margin:5px 0">${btn('⚓ Морская блокада / снять', `A.blockade('${o.id}')`, 'red')} ${btn('🚢 Торговый маршрут', `_trD.to='${o.id}';A.hub('trade')`, 'green')}</div>
     <div style="margin:5px 0"><b>Договоры:</b> ${Object.keys(TREATY_NAMES).map(k => btn(TREATY_NAMES[k], `A.trty('${o.id}','${k}')`)).join(' ')}</div>
     <div style="margin:5px 0"><b>Мир / граница:</b> ${btn(warNow ? 'Мирный договор' : 'Пересмотр границы', `A.deal('${o.id}')`, 'green')}
     ${btn('Помощь 5M', `A.aid('${o.id}')`)}${btn('Санкции', `A.sanction('${o.id}')`)}${btn('Разведка', `A.spy('${o.id}')`)}${btn('Диверсия', `A.sabotage('${o.id}')`, 'red')}</div>
