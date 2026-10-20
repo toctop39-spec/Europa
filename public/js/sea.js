@@ -16,7 +16,7 @@ A.buildShip = function () {
   if (c.economy.budget < cost) return toast('Не хватает денег', 'warn'); c.economy.budget -= cost; c.ships.q.push({ left: 6 }); toast('Заложен транспортный корабль (6 дн.)', 'good'); hubRender();
 };
 A.seaMode = function (n) {
-  let c = me(), free = c.ships.total - c.ships.busy, divs = c.army.divisions.filter(d => d.status === 'active');
+  let c = me(), free = c.ships.total - c.ships.busy - (c.ships.trade || 0), divs = c.army.divisions.filter(d => d.status === 'active');
   if (!buildings.some(b => b.type === 'port' && b.ownerId === c.id && b.status === 'active')) return toast('Нет порта. Постройте порт на побережье', 'warn');
   if (free < n) return toast(`Не хватает кораблей: нужно ${n}, свободно ${free} (1 корабль = 1 дивизия)`, 'warn'); if (divs.length < n) return toast('Не хватает свободных дивизий', 'warn');
   window._seaN = n; currentTool = 'sea_' + n; A.hubClose(); toast('Кликните по побережью, куда высадить дивизии (своё или вражеское)', 'info');
