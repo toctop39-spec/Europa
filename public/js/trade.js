@@ -54,12 +54,29 @@ A.blockade = function (id) {
   c.gov.block[id] = 1; const r = diplomaticRelations[id] && diplomaticRelations[id][c.id]; if (r && r.status !== 'at_war') { r.status = 'hostile'; if (diplomaticRelations[c.id][id]) diplomaticRelations[c.id][id].status = 'hostile'; }
   addNewsEvent(`${c.name} объявила морскую блокаду ${t.name}`, 'war'); toast(`⚓ Морская блокада ${t.name} объявлена`, 'good'); mapDirty = true; hubRender();
 };
+A.warAid = function (wid, kind) {
+  const c = me(), w = activeWars.find(x => x.id === wid); if (!w || w.a === c.id || w.b === c.id) return; const def = countryMap[w.b], att = countryMap[w.a], e = c.economy;
+  if (kind === 'sanction') { if (!att.economy.sanct) { att.economy.sanct = 1; addNewsEvent(`${c.name} вводит санкции против ${att.name}`, 'diplomacy'); } toast(`Санкции против ${att.name} введены`, 'good'); return; }
+  if (kind === 'money') { if (e.budget < 10) return toast('Нужно 10', 'warn'); e.budget -= 10; def.economy.budget += 10; }
+  else if (kind === 'men') { if (e.manpower < 20000) return toast('Нужно 20 000 человек', 'warn'); e.manpower -= 20000; def.economy.manpower += 20000; }
+  else if (RES_N[kind]) { if (e.res[kind] < 200) return toast('Нужно 200 ед. на складе', 'warn'); e.res[kind] -= 200; if (def.economy.res) def.economy.res[kind] += 200; else def.militaryStock = (def.militaryStock || 0) + 20; } else return;
+  [[w.b, c.id, 10], [w.a, c.id, -10]].forEach(([x, y, d]) => { const r = diplomaticRelations[x] && diplomaticRelations[x][y]; if (r) r.trust = clamp((r.trust || 50) + d, 0, 100); });
+  addNewsEvent(`${c.name} помогает ${def.name} в войне против ${att.name}`, 'diplomacy'); toast(`Помощь отправлена: ${def.name}`, 'good'); hubRender();
+};
 A.setOut = function (key, pct) {
   const c = me(); pct = clamp(Math.round(+pct) || 0, 0, 100); delete _outP[key];
   if (/^\d+$/.test(String(key))) { const b = buildings.find(x => x.id === +key && x.ownerId === c.id); if (b) b.out = pct; } else if (key === 'steelmill' || key === 'refinery') { c.out = c.out || {}; c.out[key] = pct; }
   hubRender();
 };
+function warSupportDaily() {   // страны-друзья защищающегося сами помогают деньгами и санкциями
+  if (currentTurn % 10) return;
+  activeWars.forEach(w => { const def = countryMap[w.b], att = countryMap[w.a]; if (!def || !att || !(isHuman(w.a) || isHuman(w.b))) return;
+    countries.forEach(B => { if (isHuman(B.id) || B.id === w.a || B.id === w.b || B._defeated || !B.economy) return; const r = diplomaticRelations[B.id] && diplomaticRelations[B.id][w.b];
+      if (!r || (r.status !== 'allied' && r.status !== 'friendly') || RNG() > 0.12) return; const amt = Math.min(3, Math.max(0, B.economy.budget * 0.05)); B.economy.budget -= amt; def.economy.budget += amt; if (RNG() < 0.4) att.economy.sanct = 1;
+      addNewsEvent(`${B.name} поддерживает ${def.name} в войне против ${att.name}`, 'diplomacy'); if (w.b === LOCAL && !suppressUI) toast(`🤝 ${B.name} поддержала вас деньгами`, 'good'); }); });
+}
 function tradeDaily() {
+  goalsDaily(); warSupportDaily();
   routes.forEach(r => {
     if (r.status !== 'active') return; const E = countryMap[r.from], I = countryMap[r.to];
     if (!E || !I || E._defeated || I._defeated) { releaseShips(r); r.status = 'cancelled'; return; }
@@ -91,7 +108,8 @@ window.tTrade = function (c) {
   <div class="cd"><h4>Новый маршрут</h4><select onchange="_trD.dir=this.value;hubRender()"><option value="sell" ${D.dir === 'sell' ? 'selected' : ''}>Продаю</option><option value="buy" ${D.dir === 'buy' ? 'selected' : ''}>Покупаю</option></select>
   <select onchange="_trD.res=this.value;hubRender()">${Object.keys(RES_N).map(k => `<option value="${k}" ${D.res === k ? 'selected' : ''}>${RES_N[k]} (≈${(MARKET[k].p * 1000).toFixed(1)}/ед.)</option>`).join('')}</select>
   <input type="number" min="10" max="30000" value="${D.amt}" style="width:70px" onchange="_trD.amt=+this.value"> ед./день · страна: <select onchange="_trD.to=this.value">${opt(D.to, 1)}</select><br><i>Покупать можно у стран с месторождениями этого ресурса, продавать — странам, у которых их нет (и игрокам). Свободного рынка нет.</i><br>Продавцы сейчас: ${Object.keys(RES_N).map(k => RES_N[k] + ' — ' + (countries.filter(o => o.id !== c.id && depCount(o.id, k) > 0).slice(0, 8).map(o => o.name).join(', ') || 'никто')).join('; ')} ${btn('Предложить', 'A.tradeGo()', 'green')}</div></div>
-  <div><div class="cd"><h4>Выпуск ресурсов</h4>Регулируйте, сколько даёт каждый объект (рудники, вышки, агрокомплексы стоят 0.04 в день на полном выпуске).${prod || '<br><i>нет добывающих объектов</i>'}</div>
+  <div><div class="cd"><h4>Помощь воюющим</h4>${activeWars.filter(w => w.a !== c.id && w.b !== c.id).slice(0, 8).map(w => `<div class="row"><span><b>${countryMap[w.a].name}</b> напал на <b>${countryMap[w.b].name}</b></span><span>${btn('10 денег', `A.warAid(${w.id},'money')`)}${btn('20k чел', `A.warAid(${w.id},'men')`)}${btn('200 еды', `A.warAid(${w.id},'food')`)}${btn('200 стали', `A.warAid(${w.id},'steel')`)}${btn('200 нефти', `A.warAid(${w.id},'oil')`)}${btn('Санкции', `A.warAid(${w.id},'sanction')`, 'red')}</span></div>`).join('') || '<i>сейчас нет войн</i>'}<i>Помощь идёт защищающейся стороне; санкции — против напавшего.</i></div>
+  <div class="cd"><h4>Выпуск ресурсов</h4>Регулируйте, сколько даёт каждый объект (рудники, вышки, агрокомплексы стоят 0.04 в день на полном выпуске).${prod || '<br><i>нет добывающих объектов</i>'}</div>
   <div class="cd"><h4>Морская блокада</h4>Порты рядом с трассой чужой торговли режут её доставку (до 90%). Нужен порт.<br><select onchange="_trD.bt=this.value"><option value="">— страна —</option>${opt(D.bt)}</select> ${btn('Объявить / снять блокаду', 'if(_trD.bt)A.blockade(_trD.bt)', 'red')}${bl}</div></div></div>`;
 };
 A.tradeGo = () => { if (!_trD.to) return toast('Выберите страну', 'warn'); A.tradeOffer(_trD.to, _trD.res, _trD.amt, _trD.dir); };
