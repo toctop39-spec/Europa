@@ -83,7 +83,7 @@ window.declareWar = function (id) {
   if (a === LOCAL) { if (cp) mark(cp.x, cp.y, '⚔', `Вы объявили войну ${t.name}`, 'war', 20); }
   else if (id === LOCAL) { toast(`⚔ ${A_.name} объявила вам войну!`, 'war'); if (cp) mark(cp.x, cp.y, '⚔', `${A_.name} объявила вам войну`, 'war', 20); }
   callAllies(a, id);
-  if (isHuman(id)) runAs(id, () => mkDoc(`Нота о начале войны от ${A_.name}`, 'Враг пересёк границу. Генеральный штаб ждёт ваших приказов.', 'Генеральный штаб', [['К исполнению: мобилизация (стабильность -3, люди +10%)', () => { t.economy.manpower = Math.min(t.economy.manpowerCap, t.economy.manpower + t.economy.manpowerCap * .1); t.gov.stability -= 3; }], ['Принять к сведению', () => { }]], 6, 1));
+  if (isHuman(id)) runAs(id, () => mkDoc(`Нота о начале войны от ${A_.name}`, `${A_.name} обвиняет вас в ${pick(['территориальных претензиях', 'нарушении прав соотечественников', 'экономической агрессии', 'угрозе безопасности границ'])} и объявляет войну. Враг пересёк границу. Генеральный штаб ждёт ваших приказов.`, 'Генеральный штаб', [['К исполнению: мобилизация (стабильность -3, люди +10%)', () => { t.economy.manpower = Math.min(t.economy.manpowerCap, t.economy.manpower + t.economy.manpowerCap * .1); t.gov.stability -= 3; }], ['Принять к сведению', () => { }]], 6, 1));
 };
 const _startWar = startWar; window.startWar = function (a, b) { [a, b].forEach(x => { let cc = countryMap[x]; if (cc && !activeWarsOf(x)) cc._home0 = capitalOf(cc); if (cc && isHuman(x)) cc._bldLost = 0; }); _startWar(a, b); let w = activeWars[activeWars.length - 1]; if (w && !w.t0) w.t0 = currentTurn; };
 // --- ежедневное
