@@ -45,7 +45,7 @@ function sendCmd(name, args) {
   if (!isHuman(LOCAL)) { toast('Вы наблюдатель: выберите страну, чтобы играть', 'warn'); openLobby(); return; }
   NET.send({ t: 'cmd', name, args: JSON.parse(JSON.stringify(args || [])) });
 }
-const WRAP = ['newProject', 'orderDiv', 'saveTpl', 'reinf', 'disband', 'hireGen', 'newArmy', 'setStance', 'armyGen', 'divArmy', 'setPost', 'setArmyPost', 'reinfAll', 'train', 'setTarget', 'clearTargets', 'tradeOffer', 'tradeCancel', 'blockade', 'setOut', 'setLine', 'setCiv', 'research', 'reinfWar', 'recall', 'autoSend', 'ceasefire', 'cb', 'warDoc', 'docDo', 'invest', 'issueBond', 'printMoney', 'trade', 'setLvl', 'setTax', 'setRate', 'law', 'decree', 'hire', 'fire', 'sanction', 'aid', 'spy', 'sabotage', 'buildShip', 'cancelP', 'pauseP', 'prioP'];
+const WRAP = ['newProject', 'orderDiv', 'saveTpl', 'reinf', 'disband', 'hireGen', 'newArmy', 'setStance', 'armyGen', 'divArmy', 'setPost', 'setArmyPost', 'reinfAll', 'train', 'setTarget', 'clearTargets', 'tradeOffer', 'tradeCancel', 'blockade', 'setOut', 'setAfter', 'warAid', 'setLine', 'setCiv', 'research', 'reinfWar', 'recall', 'autoSend', 'ceasefire', 'cb', 'warDoc', 'docDo', 'invest', 'issueBond', 'printMoney', 'trade', 'setLvl', 'setTax', 'setRate', 'law', 'decree', 'hire', 'fire', 'sanction', 'aid', 'spy', 'sabotage', 'buildShip', 'cancelP', 'pauseP', 'prioP'];
 WRAP.forEach(n => {
   const impl = A[n]; if (typeof impl !== 'function') { console.warn('нет A.' + n); return; }
   CMDS[n] = impl;
