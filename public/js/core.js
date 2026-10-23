@@ -225,7 +225,9 @@ window.processConvoys = function () {
     let div = cv.divId && o && o.army ? o.army.divisions.find(d => d.id === cv.divId) : null;
     // колонна на вражеской земле уничтожается
     if (o && own && own !== o.numericId) { let oc = countries.find(c => c.numericId === own); if (oc && atWarWith(oc.id, cv.ownerId)) {
-      convoys.splice(i, 1); if (div) { div.status = 'active'; div.strength = Math.max(20, div.strength * 0.5); }
+      if (div) { let k = ci; while (k > 0 && territoryOwner[cv.path[k][1] * OFF_W + cv.path[k][0]] !== o.numericId) k--;   // фронт сдвинулся: колонна просто останавливается у своей границы
+        if (k >= 1) { cv.path = cv.path.slice(0, k + 1); cv.pathIndex = cv.path.length - 1; } else { convoys.splice(i, 1); div.status = 'active'; div.redeploy = 1; } continue; }
+      convoys.splice(i, 1);
       if (cv.ownerId === LOCAL && visible()) { let key = 'cv' + Math.floor(px / 40) + ',' + Math.floor(py / 40); if (div || currentTurn - (lastMarkAt[key] || -99) >= 10) { lastMarkAt[key] = currentTurn; mark(px, py, '💥', div ? `Колонна «${div.name}» попала в засаду: потеряно 50% силы, отступила` : 'Колонна снабжения перехвачена', 'bad', 10); toast('💥 Ваша колонна уничтожена противником', 'bad'); } } continue; } }
     if (cv.pathIndex >= cv.path.length - 1) {
       let [tx, ty] = cv.path[cv.path.length - 1], gi = ty * OFF_W + tx;
