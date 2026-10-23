@@ -2996,7 +2996,7 @@ function processWars(sub) {
         }
         function resolveCombat(ds, myNum, enemyNum, ownerId, enemyOwnerId) {
             ds.forEach(D => {
-                if (D.strength < (D.max || 100) * 0.3 || !D._seg.length) return;
+                if (D.strength < (D.max || 100) * 0.3 || !D._seg.length || (war.hold && war.hold[ownerId])) return;
                 let di = divInfo(D), sup = D._sup || 1;
                 if (sup < 0.6) D.strength = Math.max(1, D.strength - (0.6 - sup) * 2 * WK);   // плохое снабжение выматывает дивизию
                 D._seg.forEach(([rx, ry]) => {
